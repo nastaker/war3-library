@@ -1,0 +1,6 @@
+library init {
+    function onInit(){
+      FogMaskEnable(false);
+      FogEnable(false);
+    }
+}

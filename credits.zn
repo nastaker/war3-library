@@ -1,0 +1,14 @@
+library Credits {
+    function onInit(){
+        BJDebugMsg("Speal Thanks: \n");
+        BJDebugMsg("https://www.hiveworkshop.com \n");
+        BJDebugMsg("GardenFence \n Submitted by imforfun \n");
+        BJDebugMsg("IronFence \n Submitted by Illidan(Evil)X \n");
+        BJDebugMsg("M-8 \n Submitted by Kofi_Banan \n");
+        BJDebugMsg("Metal Fence \n Submitted by Teaspoon \n");
+        BJDebugMsg("Stone Fence, Fence w/o Columns \n Submitted by Geries \n");
+        BJDebugMsg("FenceAngled \n Submitted by Dark Hunter1357 \n");
+        BJDebugMsg("AirConditioning Unit \n Submitted by JB_McKnight \n");
+        
+    }
+}

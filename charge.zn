@@ -1,0 +1,91 @@
+library Charge requires TimerUtils {
+    // 技能——幽灵（可见的）
+    constant integer ghostVisible= 'Aeth';
+    // 冲锋技能
+    constant integer spellid = 'AOws';
+    // 探路者——建造者ID
+    constant integer tanluId = 'nc48';
+    private struct ChargeData {
+        private {
+            unit u;
+            unit tanlu;
+            timer tm;
+            integer count;
+            real dx;
+            real dy;
+            
+            method destroy() {
+                ReleaseTimer(this.tm);
+                UnitRemoveAbility(this.u, ghostVisible);
+                RemoveUnit(this.tanlu);
+                this.tm = null;
+                this.u = null;
+                this.tanlu = null;
+                this.deallocate();
+            }
+            static method run() {
+                ChargeData data = ChargeData(GetTimerData(GetExpiredTimer()));
+                real targetX = GetUnitX(data.u) + data.dx;
+                real targetY = GetUnitY(data.u) + data.dy;
+                boolean canCross = true;
+                if(ModuloInteger(data.count,3) == 0)
+                {
+                    SetUnitX(data.tanlu, targetX);
+                    SetUnitY(data.tanlu, targetY);
+                    canCross = IssueBuildOrderById(data.tanlu , tanluId, targetX, targetY );
+                }
+                data.count -= 1;
+                if (data.count < 1 || !canCross) {
+                    data.destroy();
+                }else{
+                    SetUnitX(data.u, targetX);
+                    SetUnitY(data.u, targetY);
+                }
+            }
+            
+            static method create(unit u, real tx, real ty) -> ChargeData {
+                ChargeData data = ChargeData.allocate();
+                real angle = Atan2(ty - GetUnitY(u), tx - GetUnitX(u));
+                data.u = u;
+                data.dx = Cos(angle) * 36.0;
+                data.dy = Sin(angle) * 36.0;
+                data.tanlu = CreateUnit(GetOwningPlayer(u), tanluId, 0, 0, GetUnitFacing(u));
+                data.tm = NewTimer();
+                data.count = 15;
+                UnitAddAbility(data.u, ghostVisible);
+                SetTimerData(data.tm, integer(data));
+                TimerStart(data.tm, 0.02, true, function ChargeData.run);
+                return data;
+            }
+            
+            static method create2(unit u) -> ChargeData {
+                ChargeData data = ChargeData.allocate();
+                real face = GetUnitFacing(GetTriggerUnit()) * bj_PI / 180;
+                data.u = u;
+                data.dx = Cos(face) * 36.0;
+                data.dy = Sin(face) * 36.0;
+                data.tanlu = CreateUnit(GetOwningPlayer(u), tanluId, 0, 0, GetUnitFacing(u));
+                data.tm = NewTimer();
+                data.count = 15;
+                UnitAddAbility(data.u, ghostVisible);
+                SetTimerData(data.tm, integer(data));
+                TimerStart(data.tm, 0.02, true, function ChargeData.run);
+                return data;
+            }
+
+            static method launch() -> boolean {
+                if (GetSpellAbilityId() == spellid) {
+                    //ChargeData.create(GetTriggerUnit(), GetSpellTargetX(), GetSpellTargetY());
+                    ChargeData.create2(GetTriggerUnit());
+                }
+                return false;
+            }
+            static method onInit() {
+                trigger trg = CreateTrigger();
+                TriggerRegisterAnyUnitEventBJ(trg, EVENT_PLAYER_UNIT_SPELL_EFFECT);
+                TriggerAddCondition(trg, Condition(function ChargeData.launch));
+                trg = null;
+            }
+        }
+    }
+} 
