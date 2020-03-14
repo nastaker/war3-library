@@ -1,0 +1,231 @@
+library InitGame requires TimerUtils {
+
+  constant real X = 7872.00;
+  constant real Y = -3776.00;
+  constant real homeX = -8192.00;
+  constant real homeY = -4096.00;
+  constant real horGap = 384.00;
+  constant real verGap = 256.00;
+  constant integer abi_wudi = 'Avul';
+  constant integer heroCount = 24;
+  constant integer heroHorCount = 4;
+  constant integer heroVerCount = 6;
+  constant integer DIFF_COUNT = 3;
+
+  constant integer MAX_PLAYER_COUNT = 10;
+  boolean heroSelected[MAX_PLAYER_COUNT];
+  boolean selectConfirm[MAX_PLAYER_COUNT];
+  timer timerHeroSelection[MAX_PLAYER_COUNT];
+  trigger trg = null;
+  integer i = 0;
+
+  dialog dlgDiff;
+  button btnDiffs[];
+  string strDiffs[];
+
+  public {
+    force forcePlayer = CreateForce();
+    integer intCurrDiff = 0;
+  }
+
+  function nCreateHero() {
+    // 创建英雄
+    integer i = 0, j = 0, count = 0;
+    real distX = 0;
+    real distY = 0;
+    integer hero[];
+    unit u = null;
+
+    hero[0] = 'Hamg';
+    hero[1] = 'Hmkg';
+    hero[2] = 'Hpal';
+    hero[3] = 'Hblm';
+    hero[4] = 'Oshd';
+    hero[5] = 'Obla';
+    hero[6] = 'Otch';
+    hero[7] = 'Ofar';
+    hero[8] = 'Ucrl';
+    hero[9] = 'Udre';
+    hero[10] = 'Udea';
+    hero[11] = 'Ulic';
+    hero[12] = 'Ekee';
+    hero[13] = 'Edem';
+    hero[14] = 'Ewar';
+    hero[15] = 'Emoo';
+    hero[16] = 'Nbrn';
+    hero[17] = 'Nfir';
+    hero[18] = 'Nalc';
+    hero[19] = 'Nngs';
+    hero[20] = 'Nplh';
+    hero[21] = 'Npbm';
+    hero[22] = 'Ntin';
+    hero[23] = 'Nbst';
+
+  
+    for ( 0 <= i < heroVerCount ) {
+      for( 0 <= j < heroHorCount ) {
+        distX = X + j * horGap;
+        distY = Y - i * verGap;
+        u = CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), hero[i*heroHorCount + j], distX, distY, bj_UNIT_FACING);
+        SetHeroLevel(u, 100, false);
+        count = count + 1;
+        if (count >= heroCount) {
+          break;
+        }
+      }
+    }
+    u = null;
+    ReleaseTimer(GetExpiredTimer());
+  }
+
+  function nCreateUnit() {
+    nCreateHero();
+  }
+
+  function heroSelect_Timer_Action() {
+    integer playerId = GetTimerData(GetExpiredTimer());
+    selectConfirm[playerId] = false;
+    ReleaseTimer(timerHeroSelection[playerId]);
+  }
+
+  function heroSelect_Action() -> boolean {
+    integer playerId = GetPlayerId(GetTriggerPlayer());
+    unit u = null;
+    if (heroSelected[playerId]) {
+      return false;
+    }
+    if (GetOwningPlayer(GetTriggerUnit()) != Player(PLAYER_NEUTRAL_PASSIVE)) {
+      return false;
+    }
+    if (selectConfirm[playerId]) {
+      heroSelected[playerId] = true;
+      CreateUnit( GetTriggerPlayer(), GetUnitTypeId(GetTriggerUnit()), homeX, homeY, bj_UNIT_FACING );
+      if (GetTriggerPlayer() == GetLocalPlayer()) {
+        PanCameraToTimed(homeX, homeY, 0.50);
+      }
+    } else {
+      selectConfirm[playerId] = true;
+      if (timerHeroSelection[playerId] == null) {
+        timerHeroSelection[playerId] = NewTimer();
+      }
+      SetTimerData(timerHeroSelection[playerId], playerId);
+      TimerStart( timerHeroSelection[playerId], 0.20, false, function heroSelect_Timer_Action);
+    }
+    return true;
+  }
+
+  function CondStructure() -> boolean {
+    if (IsUnitType(GetFilterUnit(), UNIT_TYPE_STRUCTURE) == false){
+      return false;
+    }
+    return true;
+  }
+
+  function nSetShopText_Action() {
+    timer t = GetExpiredTimer();
+    group g = CreateGroup();
+    unit u = null;
+    GroupEnumUnitsOfPlayer(g, Player(PLAYER_NEUTRAL_PASSIVE), Condition(function CondStructure));
+    u = FirstOfGroup(g);
+    while(u != null) {
+      bj_lastCreatedTextTag = CreateTextTag();
+      SetTextTagTextBJ(bj_lastCreatedTextTag, GetUnitName(u), 14);
+      SetTextTagPosUnitBJ(bj_lastCreatedTextTag, u, -128);
+      SetTextTagColorBJ(bj_lastCreatedTextTag, 100, 100, 100, 0);
+      GroupRemoveUnit(g, u);
+      u = FirstOfGroup(g);
+    }
+    DestroyGroup(g);
+    ReleaseTimer(t);
+    g = null;
+    t = null;
+  }
+
+
+  function initHeroSelect() {
+    trg = CreateTrigger();
+    for (0 <= i < MAX_PLAYER_COUNT) {
+      TriggerRegisterPlayerUnitEvent(trg, Player(i), EVENT_PLAYER_UNIT_SELECTED, null);
+    }
+    TriggerAddCondition(trg, function heroSelect_Action);
+    trg = null;
+  }
+
+  function initShopText() {
+    timer t = NewTimer();
+    TimerStart(t, 0.5, false, function nSetShopText_Action);
+    t = null;
+  }
+
+  function IsPlayer(player p) -> boolean {
+    if (GetPlayerController(p) == MAP_CONTROL_USER && GetPlayerSlotState(p) == PLAYER_SLOT_STATE_PLAYING) {
+      return true;
+    }
+    return false;
+  }
+
+  function initforcePlayer() {
+    for (0 <= i < MAX_PLAYER_COUNT) {
+      if (IsPlayer(Player(i))) {
+        ForceAddPlayer(forcePlayer, Player(i));
+      }
+    }
+  }
+
+  function DialogDiffSelect_Action() {
+    button btnClicked = GetClickedButton();
+    for (0 <= i < DIFF_COUNT) {
+      if (btnDiffs[i] == btnClicked) {
+        intCurrDiff = i;
+      }
+    }
+    DisplayTextToForce(forcePlayer, "已选择难度：|cFFffcc00" + strDiffs[intCurrDiff] + "|r\n请玩家选择英雄");
+
+    // 选择难度完毕，选择英雄
+    PanCameraToTimed(X, Y, 0.0);
+  }
+
+  function initGameDiff() {
+    trg = CreateTrigger();
+    strDiffs[0] = "简单";
+    strDiffs[1] = "普通";
+    strDiffs[2] = "困难";
+    dlgDiff = DialogCreate();
+    btnDiffs[0] = DialogAddButton(dlgDiff, strDiffs[0]+"[Easy]", 'E');
+    btnDiffs[1] = DialogAddButton(dlgDiff, strDiffs[1]+"[Normal]", 'N');
+    btnDiffs[2] = DialogAddButton(dlgDiff, strDiffs[2]+"[Hard]", 'H');
+
+    TriggerRegisterDialogEvent(trg, dlgDiff);
+    TriggerAddAction(trg, function DialogDiffSelect_Action);
+  }
+
+  function GameDiffSelect_Action() {
+    timer t = GetExpiredTimer();
+    // 获取第一个在线的玩家
+    for (0 <= i < MAX_PLAYER_COUNT) {
+      if(IsPlayer(Player(i))) {
+        DialogSetMessage(dlgDiff, "请选择难度");
+        DialogDisplay(Player(i), dlgDiff, true);
+        break;
+      }
+    }
+    ReleaseTimer(t);
+    t = null;
+  }
+
+  function GameDiffSelect() {
+    timer t = NewTimer();
+    // 请在线玩家选择难度
+    TimerStart(t, 1.0, false, function GameDiffSelect_Action);
+    t = null;
+  }
+
+  function onInit(){
+    nCreateUnit();
+    initforcePlayer();
+    initShopText();
+    initHeroSelect();
+    initGameDiff();
+    GameDiffSelect();
+  }
+}

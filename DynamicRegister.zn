@@ -1,0 +1,23 @@
+library DynamicRegister requires ItemAbilityMod {
+
+  trigger trg_Player_Unit_Enter_Map = CreateTrigger();
+
+  function DoAction() {
+    unit u = GetEnteringUnit();
+
+    if (IsUnitIllusion(u)) {
+    } else if (IsUnitType(u, UNIT_TYPE_SUMMONED)) {
+    } else if (IsUnitType(u, UNIT_TYPE_HERO)) {
+      // 动态注册英雄拾取物品、丢弃物品事件
+      TriggerRegisterUnitEvent(trg_Player_Hero_PickUp_Item, u, EVENT_UNIT_PICKUP_ITEM);
+      TriggerRegisterUnitEvent(trg_Player_Hero_Drop_Item, u, EVENT_UNIT_DROP_ITEM);
+    }
+
+    u = null;
+  }
+
+  function onInit() {
+    YDWETriggerRegisterEnterRectSimpleNull(trg_Player_Unit_Enter_Map, bj_mapInitialPlayableArea);
+    TriggerAddAction(trg_Player_Unit_Enter_Map, function DoAction);
+  }
+}

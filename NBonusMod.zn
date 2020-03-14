@@ -1,0 +1,145 @@
+library NBonusMod requires UnitMaxState, BonusMod {
+
+  constant integer STATE_STR = 0;
+  constant integer STATE_AGI = 1;
+  constant integer STATE_INT = 2;
+  constant integer STATE_HP = 3;
+  constant integer STATE_MP = 4;
+  constant integer STATE_ATK = 5;
+  constant integer STATE_DEF = 6;
+  constant integer STATE_ATKSPD = 7;
+  constant integer STATE_LIFE_REGEN = 8;
+  constant integer STATE_MANA_REGEN_PER = 9;
+
+  public {
+    /// 添加单位最大生命值、最大魔法值
+    function AddUnitMaxLife(unit u, integer amount)
+		{
+      AddUnitMaxState(u, UNIT_STATE_MAX_LIFE, amount);
+    }
+
+    function AddUnitMaxMana(unit u, integer amount)
+		{
+      AddUnitMaxState(u, UNIT_STATE_MAX_MANA, amount);
+    }
+
+    /// 设置单位最大生命值、最大魔法值
+    function SetUnitMaxLife(unit u, integer amount)
+		{
+      SetUnitMaxState(u, UNIT_STATE_MAX_LIFE, amount);
+    }
+
+    function SetUnitMaxMana(unit u, integer amount)
+		{
+      SetUnitMaxState(u, UNIT_STATE_MAX_MANA, amount);
+    }
+
+    /// 添加单位基础属性
+    function AddUnitLifeRegen(unit u, integer amount)
+		{
+      AddUnitBonus(u, BONUS_LIFE_REGEN, amount);
+    }
+
+    function AddUnitManaRegenPercent(unit u, integer amount)
+		{
+      AddUnitBonus(u, BONUS_MANA_REGEN_PERCENT, amount);
+    }
+
+    function AddUnitAtkSpd(unit u, integer amount)
+		{
+      AddUnitBonus(u, BONUS_ATTACK_SPEED, amount);
+    }
+
+    function AddUnitDamage(unit u, integer amount)
+		{
+      AddUnitBonus(u, BONUS_DAMAGE, amount);
+    }
+
+    function AddUnitArmor(unit u, integer amount)
+		{
+      AddUnitBonus(u, BONUS_ARMOR, amount);
+    }
+
+    function AddUnitStr(unit u, integer amount)
+		{
+      AddUnitBonus(u, BONUS_STRENGTH, amount);
+    }
+
+    function AddUnitAgi(unit u, integer amount)
+		{
+      AddUnitBonus(u, BONUS_AGILITY, amount);
+    }
+
+    function AddUnitInt(unit u, integer amount)
+		{
+      AddUnitBonus(u, BONUS_INTELLIGENCE, amount);
+    }
+
+    /// 设置单位基础属性
+    function SetUnitLifeRegen(unit u, integer amount)
+		{
+      SetUnitBonus(u, BONUS_LIFE_REGEN, amount);
+    }
+
+    function SetUnitManaRegenPercent(unit u, integer amount)
+		{
+      SetUnitBonus(u, BONUS_MANA_REGEN_PERCENT, amount);
+    }
+
+    function SetUnitAtkSpd(unit u, integer amount)
+		{
+      SetUnitBonus(u, BONUS_ATTACK_SPEED, amount);
+    }
+
+    function SetUnitDamage(unit u, integer amount)
+		{
+      SetUnitBonus(u, BONUS_DAMAGE, amount);
+    }
+
+    function SetUnitArmor(unit u, integer amount)
+		{
+      SetUnitBonus(u, BONUS_ARMOR, amount);
+    }
+
+    function SetUnitStr(unit u, integer amount)
+		{
+      SetUnitBonus(u, BONUS_STRENGTH, amount);
+    }
+
+    function SetUnitAgi(unit u, integer amount)
+		{
+      SetUnitBonus(u, BONUS_AGILITY, amount);
+    }
+
+    function SetUnitInt(unit u, integer amount)
+		{
+      SetUnitBonus(u, BONUS_INTELLIGENCE, amount);
+    }
+
+    function SetUnitAttr(unit u, integer state, integer amount)
+    {
+      if (state == STATE_STR) {
+        SetUnitStr(u, amount);
+      } else if (state == STATE_AGI) {
+        SetUnitAgi(u, amount);
+      } else if (state == STATE_INT) {
+        SetUnitInt(u, amount);
+      } else if (state == STATE_HP) {
+        AddUnitMaxLife(u, amount);
+      } else if (state == STATE_MP) {
+        AddUnitMaxMana(u, amount);
+      } else if (state == STATE_ATK) {
+        SetUnitDamage(u, amount);
+      } else if (state == STATE_DEF) {
+        SetUnitArmor(u, amount);
+      } else if (state == STATE_ATKSPD) {
+        SetUnitAtkSpd(u, amount);
+      } else if (state == STATE_LIFE_REGEN) {
+        SetUnitLifeRegen(u, amount);
+      } else if (state == STATE_MANA_REGEN_PER) {
+        SetUnitManaRegenPercent(u, amount);
+      }
+    }
+  }
+
+}

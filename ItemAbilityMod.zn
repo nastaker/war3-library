@@ -1,0 +1,134 @@
+// 设置物品有的技能，这个功能需要NBonusMod库(NBonus内涵BonusMod、BonusAdd、UnitMaxState)
+library ItemAbilityMod requires TimerUtils, NBonusMod {
+  
+  public {
+    trigger trg_Player_Hero_PickUp_Item = CreateTrigger();
+    trigger trg_Player_Hero_Drop_Item = CreateTrigger();
+  }
+
+  integer ITEM_ATTR = 'ATTR';
+  integer UNIT_ATTR = 'ATTR';
+  integer NUM_SPACE = 6;
+  integer ATTR_COUNT = 10;
+  constant integer UNIT_ATTR_MAX_LIFE = 3;
+  constant integer UNIT_ATTR_MAX_MANA = 4;
+  constant integer IS_ITEM_PICKUP = 1;
+  constant integer IS_ITEM_DROP = -1;
+  // 哈希表键值：
+  // 力量,敏捷,智力,最大生命值,最大魔法值,攻击力,防御力,攻击速度,回血速度,回蓝速度(%)
+
+  function initItemAbilities() {
+    timer t = GetExpiredTimer();
+    // 初始化：物品拥有技能
+    SaveStr(ht, 'IC01', ITEM_ATTR, "+00000+00000+00000+00000+00000+00000+00040+00000+00000+00000");
+    SaveStr(ht, 'IC02', ITEM_ATTR, "+00000+00000+00000+00400+00000+00000+00000+00000+00000+00000");
+    SaveStr(ht, 'IC03', ITEM_ATTR, "+00000+00000+00000+00000+00000+00040+00000+00000+00000+00000");
+    SaveStr(ht, 'IC04', ITEM_ATTR, "+00000+00000+00000+00000+00000+00010+00000+00000+00000+00000");
+    SaveStr(ht, 'IC05', ITEM_ATTR, "+00040+00000+00000+00000+00000+00000+00000+00000+00000+00000");
+    SaveStr(ht, 'IC06', ITEM_ATTR, "+00015+00000+00000+00000+00000+00025+00000+00000+00000+00000");
+    SaveStr(ht, 'IC07', ITEM_ATTR, "+00000+00000+00000+00000+00000+00120+00000+00000+00000+00000");
+    SaveStr(ht, 'IC08', ITEM_ATTR, "+00000+00000+00000+00000+00000+00080+00000+00000+00000+00000");
+    SaveStr(ht, 'IC09', ITEM_ATTR, "+00000+00000+00000+00000+00250+00000+00000+00000+00000+00000");
+    SaveStr(ht, 'IC0A', ITEM_ATTR, "+00000+00030+00000+00000+00000+00010+00000+00025+00000+00000");
+    SaveStr(ht, 'IC0B', ITEM_ATTR, "+00000+00000+00000+00000+00000+00000+00000+00000+00010+00000");
+    SaveStr(ht, 'I101', ITEM_ATTR, "+00016+00000+00000+00000+00000+00025+00000+00015+00000+00000");
+    SaveStr(ht, 'I102', ITEM_ATTR, "+00000+00000+00000+00000+00000+00000+00020+00000+00000+00000");
+    SaveStr(ht, 'I103', ITEM_ATTR, "+00000+00000+00000+00000+00000+00000+00000+00035+00000+00000");
+    SaveStr(ht, 'I104', ITEM_ATTR, "+00020+00000+00000+00000+00000+00000+00000+00000+00000+00000");
+    SaveStr(ht, 'I105', ITEM_ATTR, "+00000+00020+00000+00000+00000+00000+00000+00000+00000+00000");
+    SaveStr(ht, 'I106', ITEM_ATTR, "+00000+00000+00020+00000+00000+00000+00000+00000+00000+00000");
+    SaveStr(ht, 'I107', ITEM_ATTR, "+00020+00020+00020+00000+00000+00000+00000+00000+00000+00000");
+    SaveStr(ht, 'I108', ITEM_ATTR, "+00000+00000+00000+00000+00000+00000+00020+00000+00000+00000");
+    SaveStr(ht, 'I109', ITEM_ATTR, "+00000+00000+00000+00000+00000+00000+00025+00000+00000+00000");
+    SaveStr(ht, 'I10A', ITEM_ATTR, "+00000+00000+00000+00000+00000+00000+00025+00000+00000+00000");
+    
+    SaveStr(ht, 'I006', ITEM_ATTR, "+00000+00000+00000+00000+01000+00000+00000+00000+00000+00000");
+
+    ReleaseTimer(t);
+    t = null;
+  }
+
+  function UnitAttrRecalculation(integer ispickup) {
+    unit hero = null;
+    item mItem = GetManipulatedItem();
+    integer value = 0;
+    integer base = 0;
+    string ItemAbils = null;
+    integer i;
+    // 判断拾取物品是否有属性
+    if (!HaveSavedString(ht, GetItemTypeId(mItem), ITEM_ATTR)) {
+      mItem = null;
+      return;
+    }
+    hero = GetManipulatingUnit();
+    ItemAbils = LoadStr(ht, GetItemTypeId(mItem), ITEM_ATTR);
+    for (0 <= i < ATTR_COUNT) {
+      value = S2I(SubString(ItemAbils, i*NUM_SPACE, (i+1)*NUM_SPACE)) * ispickup;
+      base = LoadInteger(ht, GetHandleId(hero), UNIT_ATTR + i);
+      if (value == 0) {
+      } else {
+        // 重算英雄属性
+        if (i == UNIT_ATTR_MAX_LIFE || i == UNIT_ATTR_MAX_MANA) {
+          SetUnitAttr(hero, i, value);
+        } else {
+          SetUnitAttr(hero, i, base + value);
+        }
+        // 将属性添加到英雄属性表中
+        SaveInteger(ht, GetHandleId(hero), UNIT_ATTR + i, base + value);
+      }
+    }
+    hero = null;
+    mItem = null;
+  }
+
+  function IsUnitCanPickUpItem() -> boolean {
+    unit hero = GetManipulatingUnit();
+    item mItem = GetManipulatedItem();
+    real maxlife = 0;
+    real maxmana = 0;
+    string ItemAbils = LoadStr(ht, GetItemTypeId(mItem), ITEM_ATTR);
+    integer vmaxlife = S2I(SubString(ItemAbils, UNIT_ATTR_MAX_LIFE*NUM_SPACE, (UNIT_ATTR_MAX_LIFE+1)*NUM_SPACE));
+    integer vmaxmana = S2I(SubString(ItemAbils, UNIT_ATTR_MAX_MANA*NUM_SPACE, (UNIT_ATTR_MAX_MANA+1)*NUM_SPACE));
+    boolean isVerify = true;
+    // 判断是否够扣除
+    maxlife = GetUnitState(hero, UNIT_STATE_MAX_LIFE);
+    maxmana = GetUnitState(hero, UNIT_STATE_MAX_MANA);
+    if ((vmaxlife < 0 && -1*vmaxlife >= maxlife) || (vmaxmana < 0 && -1*vmaxmana >= maxmana)) {
+      DisplayTextToPlayer(GetOwningPlayer(hero), 0, 0, "|cffffcc00生命最大值或魔法最大值未达到条件，无法使用此装备。|r");
+      isVerify = false;
+      SaveBoolean(ht, GetHandleId(mItem), 'disa', true);
+      UnitDropItemPoint(hero, mItem, GetUnitX(hero), GetUnitY(hero));
+      mItem = null;
+      hero = null;
+    }
+    return isVerify;
+  }
+
+  function PlayerHeroPickUpItemActions() {
+    if (!IsUnitCanPickUpItem()) {
+      return;
+    }
+    UnitAttrRecalculation(IS_ITEM_PICKUP);
+  }
+
+  function PlayerHeroDropItemActions() {
+    item mItem = GetManipulatedItem();
+    boolean isDisabled = LoadBoolean(ht, GetHandleId(mItem), 'disa');
+    if (isDisabled) {
+      SaveBoolean(ht, GetHandleId(mItem), 'disa', false);
+      mItem = null;
+      return;
+    }
+    UnitAttrRecalculation(IS_ITEM_DROP);
+  }
+
+  function onInit() {
+    // 初始化物品技能
+    timer t = NewTimer();
+    TimerStart(t, 0.3, false, function initItemAbilities);
+    // 初始化动作：物品拾取丢弃
+    TriggerAddAction(trg_Player_Hero_PickUp_Item, function PlayerHeroPickUpItemActions);
+    TriggerAddAction(trg_Player_Hero_Drop_Item, function PlayerHeroDropItemActions);
+    t = null;
+  }
+}

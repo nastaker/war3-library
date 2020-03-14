@@ -1,0 +1,166 @@
+library GamePreparer requires TimerUtils, SystemMultiboard {
+
+  integer DiffCount = 3;
+  integer RaceCount = 4;
+
+  dialog raceDialog;
+  dialog diffDialog;
+  button raceButtons[];
+  button diffButtons[];
+  boolean isPlayerSelected[];
+  integer diffSelectedCount[];
+  integer diffSelectedNumer = 0;
+
+  timer diffTimer;
+  boolean IsDiffSelected = false;
+  timerdialog diffTimerDialog;
+
+  function InitVars() {
+    diffTimer = NewTimer();
+    diffTimerDialog = CreateTimerDialog(diffTimer);
+    diffDialog = DialogCreate();
+    raceDialog = DialogCreate();
+    raceButtons[0] = DialogAddButton(raceDialog, "人族[Human]", 'H');
+    raceButtons[1] = DialogAddButton(raceDialog, "兽族[Orc]", 'O');
+    raceButtons[2] = DialogAddButton(raceDialog, "不死族[Undead]", 'U');
+    raceButtons[3] = DialogAddButton(raceDialog, "暗夜精灵族[NightElf]", 'E');
+    diffButtons[0] = DialogAddButton(diffDialog, "普通[Normal]", 'N');
+    diffButtons[1] = DialogAddButton(diffDialog, "困难[Hard]", 'H');
+    diffButtons[2] = DialogAddButton(diffDialog, "专家[Professional]", 'P');
+  }
+
+  function InitQuests() {
+    QuestMessageBJ(udg_PlayerForce, bj_QUESTMESSAGE_DISCOVERED, "|cFFFFCC00主要任务：|r");
+    QuestMessageBJ(udg_PlayerForce, bj_QUESTMESSAGE_DISCOVERED, "总指挥部来电：请先部署防御工事，先稳住阵地后再做其他打算。\n加入贡献值系统。\n调整视角请输入：-cam[视角高度]，[视角高度]可接收值为2000-4000之间。\n请按F9查看详细说明。");
+    CreateQuestBJ(bj_QUESTTYPE_REQ_DISCOVERED, "保卫卢沟桥", "死守北平城，誓与卢沟桥共存亡！", "ReplaceableTextures\\CommandButtons\\BTNHumanCaptureFlag.blp");
+    CreateQuestBJ(bj_QUESTTYPE_REQ_DISCOVERED, "关于工分/贡献值", "工分会依据贡献值占比分配，请通过|cffffcc00出兵|r或|cffffcc00建造防御塔|r来获取贡献值！", "ReplaceableTextures\\CommandButtons\\BTNHumanCaptureFlag.blp");
+    CreateQuestBJ(bj_QUESTTYPE_REQ_DISCOVERED, "Special Thanks", "SpiritArrow by epsilon|nCosmic Elven Wings by Mythic", "ReplaceableTextures\\CommandButtons\\BTNWispSplode.blp");
+    CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "调整视角", "输入-cam[视角高度]来调整视角，如：“-cam2500”调整视角高度为2500。视角高度范围2000-4000", "ReplaceableTextures\\CommandButtons\\BTNControlMagic.blp");
+    CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "剿匪", "附近山林中有土匪把守，剿灭他们可以获得更多资源。", "ReplaceableTextures\\CommandButtons\\BTNBanditSpearThrower.blp");
+    CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "关于", "作者：Seviethgin|n优化：Nastaker|n邮箱：nastaker@163.com|n如需获取本图未加密版本，请发送主题为“卢沟桥未加密”的邮件至上述邮箱。|n如需获取本图原版，请发送主题为“卢沟桥原版”的邮件至上述邮箱。", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
+  }
+
+  function JudgeDifficulty() {
+    integer i;
+    for (1 <= i < DiffCount) {
+      if (diffSelectedCount[0] < diffSelectedCount[i]) {
+        diffSelectedCount[0] = diffSelectedCount[i];
+        udg_CurrDiff = i;
+      }
+    }
+    DisplayTimedTextToForce(udg_PlayerForce, 90.00, ("已选择难度：" + udg_DiffStr[udg_CurrDiff]));
+  }
+
+  // 种族选择对话框被点击
+  function RaceDialogEvent() {
+    SetPlayerStateBJ(GetTriggerPlayer(), PLAYER_STATE_RESOURCE_FOOD_CAP, 100);
+    if (GetClickedButton() == raceButtons[0]) {
+      MeleeStartingUnitsForPlayer(RACE_HUMAN, GetTriggerPlayer(), udg_Loc[(20 + GetPlayerId(GetTriggerPlayer()))], true);
+    } else if (GetClickedButton() == raceButtons[1]) {
+      MeleeStartingUnitsForPlayer(RACE_ORC, GetTriggerPlayer(), udg_Loc[(20 + GetPlayerId(GetTriggerPlayer()))], true);
+    } else if (GetClickedButton() == raceButtons[2]) {
+      MeleeStartingUnitsForPlayer(RACE_UNDEAD, GetTriggerPlayer(), udg_Loc[(20 + GetPlayerId(GetTriggerPlayer()))], true);
+    } else if (GetClickedButton() == raceButtons[3]) {
+      MeleeStartingUnitsForPlayer(RACE_NIGHTELF, GetTriggerPlayer(), udg_Loc[(20 + GetPlayerId(GetTriggerPlayer()))], true);
+    }
+    MultiboardShowPersonal();
+  }
+
+  function DiffTimerDialogClose() {
+    DialogDisplay(GetEnumPlayer(), diffDialog, false);
+    // 判断此玩家是否选择了种族
+    if (!isPlayerSelected[GetPlayerId(GetEnumPlayer())]) {
+      DialogSetMessage(raceDialog, "选择种族");
+      DialogDisplay(GetEnumPlayer(), raceDialog, true);
+    }
+  }
+
+  // 难度选择对话框被点击
+  function DiffDialogEvent() {
+    integer i;
+    diffSelectedNumer = diffSelectedNumer + 1;
+    DialogSetMessage(raceDialog, "选择种族");
+    DialogDisplay(GetTriggerPlayer(), raceDialog, true);
+    isPlayerSelected[GetPlayerId(GetTriggerPlayer())] = true;
+    for (0 <= i < DiffCount) {
+      if (GetClickedButton() == diffButtons[i]) {
+        diffSelectedCount[i] = diffSelectedCount[i] + 1;
+      }
+    }
+    if (IsDiffSelected || diffSelectedNumer < CountPlayersInForceBJ(udg_PlayerForce)) {
+      return;
+    }
+    IsDiffSelected = true;
+    // 所有人都已选择难度
+    // 暂停计时器
+    PauseTimer(diffTimer);
+    // 隐藏计时器窗口
+    TimerDialogDisplay(diffTimerDialog, false);
+    // 判断选择的难度
+    JudgeDifficulty();
+    InitQuests();
+    PrepareMultiboard();
+    TriggerExecute(gg_trg_GameStart);
+  }
+
+  function DiffTimerTicked() {
+    // 暂停计时器
+    PauseTimer(diffTimer);
+    // 隐藏计时器窗口
+    TimerDialogDisplay(diffTimerDialog, false);
+    // 如果所有人都选择了难度，此计时器不做任何动作
+    if (IsDiffSelected) {
+      return;
+    }
+    IsDiffSelected = true;
+    // 关闭所有人难度选择对话框，并让其中没有选择种族的玩家选择种族
+    ForForce(udg_PlayerForce, function DiffTimerDialogClose);
+    // 判断选择的难度
+    JudgeDifficulty();
+    InitQuests();
+    PrepareMultiboard();
+    TriggerExecute(gg_trg_GameStart);
+  }
+
+  function RegisterPlayerThings() {
+    SetPlayerTechMaxAllowedSwap('Nsir', 1, GetEnumPlayer());
+    SetPlayerTechMaxAllowedSwap('Hvwd', 1, GetEnumPlayer());
+    TriggerRegisterPlayerUnitEventSimple(gg_trg_Warpten, GetEnumPlayer(), EVENT_PLAYER_UNIT_CONSTRUCT_START);
+    TriggerRegisterPlayerUnitEventSimple(gg_trg_Warpten, GetEnumPlayer(), EVENT_PLAYER_UNIT_UPGRADE_START);
+    DialogDisplay(GetEnumPlayer(), diffDialog, true);
+  }
+
+  function init() {
+    // 打开电影模式
+    CinematicModeBJ(true, GetPlayersAll());
+    // 淡入
+    CinematicFadeBJ(bj_CINEFADETYPE_FADEIN, 2.00, "ReplaceableTextures\\CameraMasks\\HazeFilter_mask.blp", 0, 0, 0, 0);
+    // 发送提示
+    TransmissionFromUnitWithNameBJ(GetPlayersAll(), null, "作者", null, "请稍等，游戏加载中……", bj_TIMETYPE_SET, 1.00, true);
+    // 关闭电影模式
+    CinematicModeBJ(false, GetPlayersAll());
+    // 启用难度选择计时器
+    TimerStart(diffTimer, 10.00, false, function DiffTimerTicked);
+    TimerDialogSetTitle(diffTimerDialog, "难度选择倒计时");
+    TimerDialogDisplay(diffTimerDialog, true);
+    DialogSetMessage(diffDialog, "请选择难度");
+    ForForce(udg_PlayerForce, function RegisterPlayerThings);
+  }
+
+  function onInit() {
+    trigger trig = CreateTrigger();
+    trigger trigDiffDialog = CreateTrigger();
+    trigger trigRaceDialog = CreateTrigger();
+    // 初始化对话框、计时器等变量
+    InitVars();
+    // 游戏开始〇秒后触发
+    TriggerRegisterTimerEvent(trig, 0.00, false);
+    TriggerAddAction(trig, function init);
+    // 难度选择对话框被点击事件;
+    TriggerRegisterDialogEvent(trigDiffDialog, diffDialog);
+    TriggerAddAction(trigDiffDialog, function DiffDialogEvent);
+    // 种族选择对话框被点击事件;
+    TriggerRegisterDialogEvent(trigRaceDialog, raceDialog);
+    TriggerAddAction(trigRaceDialog, function RaceDialogEvent);
+  }
+}

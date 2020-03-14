@@ -1,0 +1,217 @@
+library SystemMultiboard requires optional PlatformHelper {
+  timer timerEnemyCount = CreateTimer();
+  group gEnemy = CreateGroup();
+  integer enemyCountRowIndex = 0;
+  integer rowCountAddtion = 6;
+  boolean multiboardInited = false;
+  string qqgroup = "QQ群：|cffffcc0039055594|r";
+  string author = "作者：|cffffcc00Nastaker|r";
+  string date = "更新日期：|cffffcc002020/03/14|r";
+  string ver = "版本：|cffffcc001.211|r";
+
+  multiboard Multiboard;
+  string HeaderTitle[];
+
+  function MultiboardUpdatePlayerScore(integer playerIndex) {
+    // 设置玩家杀敌数
+    MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 1], YDWEGetPlayerColorString(Player(playerIndex), I2S(udg_Kills[playerIndex])));
+    // 设置玩家贡献分
+    MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 2], YDWEGetPlayerColorString(Player(playerIndex), I2S(udg_PlayerDedication[playerIndex])));
+    // 设置玩家工分
+    MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 3], YDWEGetPlayerColorString(Player(playerIndex), I2S(udg_PlayerWorkPoint[playerIndex])));
+    // 从这列开始，平台上游玩才会有
+    if (udg_IsOnPlat11) {
+      // 设置玩家积分
+      MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 4], YDWEGetPlayerColorString(Player(playerIndex), I2S(PlayerScore[playerIndex]-PlayerScoreUsed[playerIndex])+"/"+I2S(PlayerScore[playerIndex])));
+      // 设置玩家本局积分
+      MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 5], YDWEGetPlayerColorString(Player(playerIndex), I2S(addedScore[playerIndex])));
+      // 设置玩家称号
+      MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 6], GetPlayerTitle(playerIndex));
+    }
+  }
+
+  function MultiboardUpdatePlayerForceScore() {
+    MultiboardUpdatePlayerScore(GetPlayerId(GetEnumPlayer()));
+  }
+
+  public {
+    integer ColCount;
+    integer PlayerMultiboardRowIndex[];
+    multiboarditem MultiboardItem[];
+
+    function UpdateMultiboardPlayerId(integer playerIndex) {
+      MultiboardUpdatePlayerScore(playerIndex);
+    }
+    function UpdateMultiboard() {
+      ForForce(udg_PlayerForce, function MultiboardUpdatePlayerForceScore);
+    }
+    function MultiboardShow() {
+      MultiboardDisplay(Multiboard, true);
+      MultiboardMinimize(Multiboard, true);
+    }
+    function MultiboardShowPersonal() {
+      if (Multiboard != null && GetTriggerPlayer() == GetLocalPlayer()) {
+        MultiboardDisplay(Multiboard, true);
+        MultiboardMinimize(Multiboard, false);
+      }
+    }
+  }
+  
+  function InitMultiboardMain() {
+    integer col, row, PlayerCount;
+    real ColWidth[], totalWidth;
+    integer tempPlayerIndexInRow[];
+
+    PlayerCount = CountPlayersInForceBJ(udg_PlayerForce);
+
+    if (udg_IsOnPlat11) {
+      ColCount = 7;
+      ColWidth[0] = 0.08;
+      ColWidth[1] = 0.04;
+      ColWidth[2] = 0.04;
+      ColWidth[3] = 0.04;
+      ColWidth[4] = 0.04;
+      ColWidth[5] = 0.04;
+      ColWidth[6] = 0.04;
+      totalWidth = 0.33;
+      rowCountAddtion = rowCountAddtion - 1;
+      InitPlayerPlatScore();
+    } else {
+      ColCount = 4;
+      ColWidth[0] = 0.08;
+      ColWidth[1] = 0.04;
+      ColWidth[2] = 0.04;
+      ColWidth[3] = 0.04;
+      totalWidth = 0.21;
+    }
+
+    MultiboardSetTitleText(Multiboard, "抗日英雄榜 难度：" + udg_DiffStr[udg_CurrDiff]);
+    MultiboardSetRowCount(Multiboard, PlayerCount + rowCountAddtion);
+    MultiboardSetItemsStyle(Multiboard, true, false);
+    MultiboardSetColumnCount(Multiboard, ColCount);
+
+    // 存储玩家真实索引（如只有两个玩家的情况，玩家3、玩家5，下面需要填入玩家信息，就得是2、4，这里的2、4存入索引为0、1的PlayerMultiboardRowIndex中）
+    // row=行索引，行索引之所以从1开始，是因为第0行是表头
+    // col=玩家索引，后面需要根据玩家索引找到对应在多面板上的第几行，以便修改玩家行数据
+    row = 1;
+    for (0 <= col < 8) {
+      if (GetPlayerController(Player(col))==MAP_CONTROL_USER && GetPlayerSlotState(Player(col)) == PLAYER_SLOT_STATE_PLAYING) {
+        PlayerMultiboardRowIndex[col] = row;
+        tempPlayerIndexInRow[row] = col;
+        row = row + 1;
+      }
+    }
+    // 注意：不要改动上面循环！
+
+    for (0 <= row <= PlayerCount) {
+      for(0 <= col < ColCount) {
+        MultiboardItem[(row * ColCount) + col] = MultiboardGetItem(Multiboard, row, col);
+        MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + col], ColWidth[col]);
+        if (row == 0) {
+          // 设置标题
+          MultiboardSetItemValue(MultiboardItem[col], HeaderTitle[col]);
+        }
+      }
+      if (row > 0) {
+        // 设置玩家姓名
+        MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], YDWEGetPlayerColorString(Player(tempPlayerIndexInRow[row]), GetPlayerName(Player(tempPlayerIndexInRow[row]))));
+      }
+    }
+    
+    UpdateMultiboard();
+    // 设置表底格栅
+    MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], totalWidth);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "|cccdedede────────────────────────────────────────────|r");
+    row = row + 1;
+    enemyCountRowIndex = row;
+    // 显示敌人总数
+    MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.08);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "敌人总数量：");
+    MultiboardItem[(row * ColCount) + 1] = MultiboardGetItem(Multiboard, row, 1);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 1], 0.02);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 1], "0");
+    MultiboardItem[(row * ColCount) + 2] = MultiboardGetItem(Multiboard, row, 2);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 2], 0.08);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 2], "下波超过即失败：");
+    MultiboardItem[(row * ColCount) + 3] = MultiboardGetItem(Multiboard, row, 3);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 3], 0.02);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 3], "0");
+    row = row + 1;
+    // 设置表底格栅
+    MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], totalWidth);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "|cccdedede────────────────────────────────────────────|r");
+    row = row + 1;
+    // 设置表底
+    MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.10);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], qqgroup);
+    MultiboardItem[(row * ColCount) + 1] = MultiboardGetItem(Multiboard, row, 1);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 1], 0.10);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 1], author);
+    if (udg_IsOnPlat11) {
+      MultiboardItem[(row * ColCount) + 2] = MultiboardGetItem(Multiboard, row, 2);
+      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 2], 0.12);
+      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 2], ver);
+    } else {
+      row = row + 1;
+      MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
+      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.10);
+      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], date);
+      MultiboardItem[(row * ColCount) + 1] = MultiboardGetItem(Multiboard, row, 1);
+      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 1], 0.10);
+      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 1], ver);
+    }
+  }
+
+  function ConditionGroupEnemy() -> boolean {
+    if ((IsUnitType(GetFilterUnit(), UNIT_TYPE_MELEE_ATTACKER) ||
+    IsUnitType(GetFilterUnit(), UNIT_TYPE_RANGED_ATTACKER)) &&
+    !IsUnitType(GetFilterUnit(), UNIT_TYPE_STRUCTURE) &&
+    !IsUnitType(GetFilterUnit(), UNIT_TYPE_SUMMONED) &&
+    GetUnitState(GetFilterUnit(), UNIT_STATE_LIFE) > 0.45 &&
+    IsUnitAlly(GetFilterUnit(), Player(8)) &&
+    GetOwningPlayer(GetFilterUnit()) != Player(PLAYER_NEUTRAL_PASSIVE)) {
+      udg_CurrEnemyCount = udg_CurrEnemyCount + 1;
+      return true;
+    }
+    return false;
+  }
+
+  function UpdateMultiboardEnemyCount() {
+    if (enemyCountRowIndex > 0) {
+      // 设置敌人总数
+      udg_CurrEnemyCount = 0;
+      GroupClear(gEnemy);
+      GroupEnumUnitsInRange(gEnemy, 0.0, 0.0, 10000, Condition(function ConditionGroupEnemy));
+      MultiboardSetItemValue(MultiboardItem[enemyCountRowIndex * ColCount + 1], "|cFFFF3333"+I2S(udg_CurrEnemyCount));
+      MultiboardSetItemValue(MultiboardItem[enemyCountRowIndex * ColCount + 3], "|cFFFF3333"+I2S(250+10*udg_RoundIndex));
+    }
+  }
+
+  public function PrepareMultiboard() {
+    if (multiboardInited) {
+      return;
+    }
+    multiboardInited = true;
+    InitMultiboardMain();
+  }
+
+  function initVars() {
+    Multiboard = CreateMultiboard();
+    HeaderTitle[0] = "|cffffcc00玩家|r";
+    HeaderTitle[1] = "|cffffcc00杀敌|r";
+    HeaderTitle[2] = "|cffffcc00贡献值|r";
+    HeaderTitle[3] = "|cffffcc00工分|r";
+    HeaderTitle[4] = "|cffffcc00积分|r";
+    HeaderTitle[5] = "|cffffcc00本局积分|r";
+    HeaderTitle[6] = "|cffffcc00称号|r";
+  }
+
+  function onInit() {
+    initVars();
+    TimerStart(timerEnemyCount, 10.0, true, function UpdateMultiboardEnemyCount);
+  }
+}

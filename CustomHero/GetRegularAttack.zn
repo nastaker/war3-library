@@ -1,0 +1,75 @@
+library GetRegularAttack {
+  hashtable ht_userstate = InitHashtable();
+
+  constant integer ABILID = 'Xatk';
+  constant integer BUFFID_MELEE = 'Bpsd';
+  constant integer BUFFID_RANGED = 'Bpoi';
+
+  trigger trg;
+
+  public function RegisterUnitRegularAttack(unit u) {
+    UnitAddAbility(u, ABILID);
+    UnitMakeAbilityPermanent(u, true, ABILID);
+  }
+
+  function UnitRegularAttack(unit attacker, unit u, real damage) {
+    //通用攻击触发
+  }
+
+  function UnitRangedRegularAttack(unit attacker, unit u, real damage) {
+    // 远程攻击触发
+    UnitRegularAttack(attacker, u, damage);
+  }
+
+  function UnitMeleeRegularAttack(unit attacker, unit u, real damage) {
+    // 近战攻击触发
+    UnitRegularAttack(attacker, u, damage);
+  }
+
+  function UnitDamaged() -> boolean {
+    unit attacker = GetEventDamageSource();
+    unit u = GetTriggerUnit();
+    if (GetUnitAbilityLevel(u, BUFFID_RANGED) > 0) {
+      // 远程攻击
+      UnitRemoveAbility(u, BUFFID_RANGED);
+      UnitRemoveAbility(u, BUFFID_MELEE);
+      UnitRangedRegularAttack(attacker, u, GetEventDamage());
+    } else if (GetUnitAbilityLevel(u, BUFFID_MELEE) > 0) {
+      // 近战攻击
+      UnitRemoveAbility(u, BUFFID_MELEE);
+      UnitRemoveAbility(u, BUFFID_RANGED);
+      UnitMeleeRegularAttack(attacker, u, GetEventDamage());
+    } else {
+      // 魔法伤害
+    }
+    u = null;
+    attacker = null;
+    return false;
+  }
+
+  function UnitEnterMap() -> boolean {
+    TriggerRegisterUnitEvent(trg, GetEnteringUnit(), EVENT_UNIT_DAMAGED);
+    return false;
+  }
+
+  function onInit() {
+    group g = CreateGroup();
+    unit u = null;
+    integer i = 0;
+    trg = CreateTrigger();
+    TriggerRegisterEnterRectSimple(trg, bj_mapInitialPlayableArea);
+    TriggerAddCondition(trg, Condition(function UnitEnterMap));
+    trg = CreateTrigger();
+    GroupEnumUnitsInRect(g, bj_mapInitialPlayableArea, null);
+    u = FirstOfGroup(g);
+    while(u != null) {
+      TriggerRegisterUnitEvent(trg, u, EVENT_UNIT_DAMAGED);
+      GroupRemoveUnit(g, u);
+      u = FirstOfGroup(g);
+    }
+    TriggerAddCondition(trg, Condition(function UnitDamaged));
+    for (0<=i<16) {
+      SetPlayerAbilityAvailable(Player(i), ABILID, false); 
+    }
+  }
+}

@@ -1,0 +1,250 @@
+library InitGamePassiveObjects requires BonusAdd, NBonusMod {
+
+  integer RandomItemIdDict[];
+  integer areaIndex = 0;
+
+  function InitStockRandomItems() {
+    RandomItemIdDict[0] = 'hval';
+    RandomItemIdDict[1] = 'hcun';
+    RandomItemIdDict[2] = 'rst1';
+    RandomItemIdDict[3] = 'wild';
+    RandomItemIdDict[4] = 'will';
+    RandomItemIdDict[5] = 'ward';
+    RandomItemIdDict[6] = 'lhst';
+    RandomItemIdDict[7] = 'sres';
+    RandomItemIdDict[8] = 'pres';
+    RandomItemIdDict[9] = 'kpin';
+    RandomItemIdDict[10] = 'rwiz';
+    RandomItemIdDict[11] = 'fgrd';
+    RandomItemIdDict[12] = 'bgst';
+    RandomItemIdDict[13] = 'clfm';
+    RandomItemIdDict[14] = 'sand';
+    RandomItemIdDict[15] = 'rag1';
+    RandomItemIdDict[16] = 'pmna';
+    RandomItemIdDict[17] = 'shar';
+    RandomItemIdDict[18] = 'rde1';
+    RandomItemIdDict[19] = 'afac';
+    RandomItemIdDict[20] = 'ssil';
+    RandomItemIdDict[21] = 'pnvu';
+    RandomItemIdDict[22] = 'srrc';
+    RandomItemIdDict[23] = 'whwd';
+    RandomItemIdDict[24] = 'wcyc';
+    RandomItemIdDict[25] = 'prvt';
+    RandomItemIdDict[26] = 'fgdg';
+    RandomItemIdDict[27] = 'ciri';
+    RandomItemIdDict[28] = 'wswd';
+    RandomItemIdDict[29] = 'wshs';
+    RandomItemIdDict[30] = 'rde2';
+    RandomItemIdDict[31] = 'evtl';
+    RandomItemIdDict[32] = 'lgdh';
+    RandomItemIdDict[33] = 'clsd';
+    RandomItemIdDict[34] = 'rat6';
+    RandomItemIdDict[35] = 'mcou';
+    RandomItemIdDict[36] = 'bspd';
+    RandomItemIdDict[37] = 'fgsk';
+    RandomItemIdDict[38] = 'rhth';
+    RandomItemIdDict[39] = 'rin1';
+    RandomItemIdDict[40] = 'sbch';
+    RandomItemIdDict[41] = 'rat9';
+    RandomItemIdDict[42] = 'odef';
+    RandomItemIdDict[43] = 'ankh';
+    RandomItemIdDict[44] = 'gcel';
+    RandomItemIdDict[45] = 'belv';
+    RandomItemIdDict[46] = 'totw';
+    RandomItemIdDict[47] = 'cnob';
+    RandomItemIdDict[48] = 'sror';
+    RandomItemIdDict[49] = 'woms';
+    RandomItemIdDict[50] = 'crys';
+    RandomItemIdDict[51] = 'rde3';
+    RandomItemIdDict[52] = 'pdiv';
+    RandomItemIdDict[53] = 'spsh';
+    RandomItemIdDict[54] = 'ajen';
+    RandomItemIdDict[55] = 'penr';
+    RandomItemIdDict[56] = 'pghe';
+    RandomItemIdDict[57] = 'fgrg';
+    RandomItemIdDict[58] = 'brac';
+    RandomItemIdDict[59] = 'hlst';
+    RandomItemIdDict[60] = 'pgma';
+    RandomItemIdDict[61] = 'mnst';
+    RandomItemIdDict[62] = 'ratc';
+    RandomItemIdDict[63] = 'fgfh';
+    RandomItemIdDict[64] = 'infs';
+    RandomItemIdDict[65] = 'rlif';
+  }
+
+  function GenerateStockRandomItems() {
+    integer i = 0;
+    integer itemId = 0;
+    integer itemIndex = 0;
+
+    for(0 <= i < 10) {
+      // 清空现有市场内所有售卖物品
+      RemoveItemFromAllStock(RandomItemIdDict[i]);
+    }
+
+    for(0 <= i < 11) {
+      // 重新随机市场售卖物品
+      itemIndex = GetRandomInt(11, 65-i);
+      itemId = RandomItemIdDict[i];
+      RandomItemIdDict[i] = RandomItemIdDict[itemIndex];
+      RandomItemIdDict[itemIndex] = itemId;
+      
+      itemId = RandomItemIdDict[65-i];
+      RandomItemIdDict[65-i] = RandomItemIdDict[itemIndex];
+      RandomItemIdDict[itemIndex] = itemId;
+
+      AddItemToAllStock(RandomItemIdDict[i], 1, 1);
+    }
+  }
+
+  function InitBandits() {
+    unit u;
+    integer i = 0;
+    real minX;
+    real maxX;
+    real minY;
+    real maxY;
+    integer banditType[];
+
+    banditType[0] = 'nban';
+    banditType[1] = 'nbrg';
+    banditType[2] = 'nrog';
+    banditType[3] = 'nass';
+    banditType[4] = 'nenf';
+    banditType[5] = 'nbld';
+
+    if (areaIndex == 0) {
+      minX = -9700;
+      maxX = -8192;
+      minY = -9700;
+      maxY = 4100;
+    } else if (areaIndex == 1) {
+      minX = 8192;
+      maxX = 9700;
+      minY = -9700;
+      maxY = 3000;
+    } else if (areaIndex == 2) {
+      minX = -8192;
+      maxX = -3500;
+      minY = 1600;
+      maxY = 4100;
+    } else if (areaIndex == 3) {
+      minX = 3500;
+      maxX = 8192;
+      minY = 600;
+      maxY = 3500;
+    }
+
+    for (0 <= i < 4) {
+      CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), 'ngol', GetRandomReal(minX, maxX), GetRandomReal(minY, maxY), 270);
+    }
+    
+    for (0 <= i < 100) {
+      CreateDestructable('BTtw', GetRandomReal(minX, maxX), GetRandomReal(minY, maxY), 270, .8 + (.2 * ModuloInteger(i,3)), ModuloInteger(i,10) );
+    }
+
+    for (0 <= i < 50) {
+      u = CreateUnit(Player(PLAYER_NEUTRAL_AGGRESSIVE), banditType[ModuloInteger(i,6)], GetRandomReal(minX, maxX), GetRandomReal(minY, maxY), ModuloInteger(i,6)*60.);
+      SetUnitAcquireRange(u, 200.00);
+      UnitAddAbility(u, 'ACen');
+      UnitAtkAdd(u, GetUnitLevel(u) * GetUnitLevel(u) * 3);
+      UnitMaxLifeAdd(u, GetUnitLevel(u) * GetUnitLevel(u) * 25);
+      UnitMaxManaAdd(u, 100 * GetUnitLevel(u));
+      SetUnitState(u, UNIT_STATE_MANA, GetUnitState(u, UNIT_STATE_MAX_MANA) );
+      u = null;
+    }
+    
+    areaIndex = areaIndex + 1;
+    if (areaIndex < 4) {
+      TimerStart(GetExpiredTimer(), 1.0, false, function InitBandits);
+    } else {
+      DestroyTimer(GetExpiredTimer());
+    }
+  }
+
+  function InitResources() {
+    integer i = 0;
+    integer j = 0;
+    integer k = 0;
+    integer n = 0;
+    real x = 0;
+    real y = 0;
+    for (0 <= i < 8) {
+      // 创建金矿
+      if (i == 0 || i == 1 || i == 4 || i == 5) {
+        k = 512;
+      } else {
+        k = -512;
+      }
+      x = GetLocationX(udg_Loc[(10 + i)]);
+      y = GetLocationY(udg_Loc[(10 + i)]);
+      AddResourceAmount(CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), 'ngol', x + 512, y + k, 270), 87500);
+      AddResourceAmount(CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), 'ngol', x - 512, y + k, 270), 87500);
+      
+      if (i == 0 || i == 1 || i == 4 || i == 5) {
+        y = GetLocationY(udg_Loc[(10 + i)]) + 640;
+      } else {
+        y = GetLocationY(udg_Loc[(10 + i)]) + 1600;
+      }
+
+
+      x = GetLocationX(udg_Loc[(10 + i)]) - 1088;
+      // 左侧树
+      for (0 <= j < 3) {
+        for (0 <= k < 19) {
+          n = n + 1;
+          CreateDestructable('BTtw', x - 128 * j, y - 128 * k, 270, .8 + (.2 * ModuloInteger(n,3)), ModuloInteger(n,10) );
+        }
+      }
+      if (i == 0 || i == 1 || i == 4 || i == 5) {
+        // 上侧树
+        for (0 <= j < 22) {
+          for (0 <= k < 2) {
+            n = n + 1;
+            CreateDestructable('BTtw', x - 256 + 128 * j, y + 128 * (k+1), 270, .8 + (.2 * ModuloInteger(n,3)), ModuloInteger(n,10) );
+          }
+        }
+      } else {
+        // 下侧树
+        for (0 <= j < 22) {
+          for (0 <= k < 2) {
+            n = n + 1;
+            CreateDestructable('BTtw', x - 256 + 128 * j, y - 128 * (k+19), 270, .8 + (.2 * ModuloInteger(n,3)), ModuloInteger(n,10) );
+          }
+        }
+      }
+      // 右侧树
+      x = GetLocationX(udg_Loc[(10 + i)]) + 1344;
+      for (0 <= j < 3) {
+        for (0 <= k < 19) {
+          n = n + 1;
+          CreateDestructable('BTtw', x - 128 * j, y - 128 * k, 270, .8 + (.2 * ModuloInteger(n,3)), ModuloInteger(n,10) );
+        }
+      }
+    }
+
+    DestroyTimer(GetExpiredTimer());
+  }
+
+  function onInit() {
+    timer t = null;
+
+    InitStockRandomItems();
+
+    t = CreateTimer();
+    // 每30秒，刷新市场售卖的所有物品
+    TimerStart(t, 30.0, true, function GenerateStockRandomItems);
+    t = null;
+    
+    t = CreateTimer();
+    // 初始化中立资源
+    TimerStart(t, 0.5, false, function InitResources);
+    t = null;
+
+    t = CreateTimer();
+    // 初始化中立敌对盗贼
+    TimerStart(t, 1.0, false, function InitBandits);
+    t = null;
+  }
+
+}

@@ -1,0 +1,72 @@
+library UnitSummoned requires NBonusMod {
+
+  integer summonedUnitAbility = 'A02E';
+  
+  public function UnitSummoned(unit hero, unit summon) {
+    integer atk = 0;
+    integer hp = 0;
+    integer armor = 0;
+    real x = 0;
+    if (GetUnitAbilityLevel(summon, summonedUnitAbility) > 0) {
+      return;
+    }
+    x = GetUnitLevel(summon) * (GetHeroLevel(hero) * 0.01);
+    atk = R2I(GetHeroInt(hero,false) * (0.10 * (udg_CurrDiff+1)) * x);
+    hp = R2I(GetHeroStr(hero,false) * x);
+    armor = R2I(GetHeroAgi(hero, false) * 0.10 * x);
+    if(GetUnitTypeId(summon) == 'ndr1' || GetUnitTypeId(summon) == 'ndr2' || GetUnitTypeId(summon) == 'ndr3' || GetUnitTypeId(summon) == 'n00F' || GetUnitTypeId(summon) == 'n00G') {
+      atk = R2I(atk * 0.5);
+      hp = R2I(hp * 0.5);
+    } else if (GetUnitAbilityLevel(summon, 'Aloc') > 0) {
+      hp = 0;
+    } else if (GetUnitAbilityLevel(summon, 'A007') > 0) {
+      atk = atk + R2I(atk * GetHeroLevel(hero) * 0.05);
+      hp = hp + R2I(hp * GetHeroLevel(hero) * 0.05);
+    } else if (GetUnitAbilityLevel(summon, 'BUan') > 0) {
+      atk = atk * 3;
+      hp = 0;
+      UnitDamageAdd(summon, atk);
+    }
+
+    UnitAddAbility(summon, summonedUnitAbility);
+    UnitMakeAbilityPermanent(summon, true, summonedUnitAbility);
+    UnitAtkAdd(summon, atk);
+    UnitMaxLifeAdd(summon, hp);
+    UnitArmorAdd(summon, armor);
+    UnitAtkSpdAdd(summon, GetHeroLevel(hero));
+    if (GetUnitAbilityLevel(summon, 'Aloc') == 0) {
+      DestroyEffect(AddSpecialEffect("Abilities\\Spells\\Human\\MassTeleport\\MassTeleportCaster.mdl", GetUnitX(summon), GetUnitY(summon)));
+    }
+    hero = null;
+    summon = null;
+  }
+
+  function PreUnitSummoned() {
+    boolean valid = true;
+    unit hero = GetSummoningUnit();
+    unit summon = GetSummonedUnit();
+    if (IsUnitType(hero, UNIT_TYPE_HERO) == false) {
+      valid = false;
+    } else if (!(IsUnitType(summon, UNIT_TYPE_RANGED_ATTACKER) || IsUnitType(summon, UNIT_TYPE_MELEE_ATTACKER))) {
+      valid = false;
+    } else if (IsUnitIllusion(summon)) {
+      valid = false;
+    }
+    if (!valid) {
+      hero = null;
+      summon = null;
+      return;
+    }
+
+    UnitSummoned(hero, summon);
+  }
+
+  function onInit() {
+    trigger trg = CreateTrigger();
+    integer i = 0;
+    for (0<=i<8) {
+      TriggerRegisterPlayerUnitEvent(trg, Player(i), EVENT_PLAYER_UNIT_SUMMON, null);
+    }
+    TriggerAddCondition(trg, function PreUnitSummoned);
+  }
+}

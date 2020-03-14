@@ -1,0 +1,194 @@
+library SystemWorkpoint requires TimerUtils, SystemMultiboard {
+  
+  function CondEnumPlayerNeutralPassive() -> boolean {
+    boolean b = false;
+    unit u = GetFilterUnit();
+    if (GetUnitTypeId(u) == 'n003') {
+      b = true;
+    }
+    return b;
+  }
+
+  function isWorkpointEnough(integer workpoint, integer diffWorkpoint) -> boolean {
+    if (workpoint < diffWorkpoint) {
+      DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "工分不足，无法兑换。");
+      return false;
+    }
+    return true;
+  }
+
+  function SellUnit() {
+    integer soldUnitId = GetUnitTypeId(GetSoldUnit());
+    integer diffWorkpoint = 0;
+    integer playerId = GetPlayerId(GetOwningPlayer(GetBuyingUnit()));
+    integer workpoint = udg_PlayerWorkPoint[playerId];
+    // 删除购买的单位
+    RemoveUnit(GetSoldUnit());
+    // 保存unit
+    if (soldUnitId == 'n00W') {
+      // 左侧信号
+      PingMinimapEx(-8696.00, 2020.00, 1, 255, 255, 0, false);
+      PingMinimapEx(-5105.00, 2698.00, 1, 255, 255, 0, false);
+      PingMinimapEx(-8696.00, -2020.00, 1, 255, 255, 0, false);
+      PingMinimapEx(-8696.00, -8192.00, 1, 255, 255, 0, false);
+      // 右侧信号
+      PingMinimapEx(8696.00, 2020.00, 1, 255, 255, 0, false);
+      PingMinimapEx(5105.00, 2698.00, 1, 255, 255, 0, false);
+      PingMinimapEx(8696.00, -2020.00, 1, 255, 255, 0, false);
+      PingMinimapEx(8696.00, -8192.00, 1, 255, 255, 0, false);
+      // --------------------
+      PlaySoundBJ(gg_snd_Hint);
+    } else {
+      if (soldUnitId == 'n00M') {
+        // 兑换5等级
+        if (GetHeroLevel(GetBuyingUnit()) >= 100) {
+          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "英雄等级已到达满级，无法兑换等级。");
+          return;
+        }
+        // 减少50工分
+        diffWorkpoint = 50;
+        if (isWorkpointEnough(workpoint, diffWorkpoint)) {
+          SetHeroLevel(GetBuyingUnit(), GetHeroLevel(GetBuyingUnit())+5, true);
+          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "已成功兑换英雄等级。");
+        }
+      } else if (soldUnitId == 'n00U') {
+        // 兑换4000木材 减少20工分
+        diffWorkpoint = 20;
+        if (isWorkpointEnough(workpoint, diffWorkpoint)) {
+          AdjustPlayerStateBJ(4000, GetOwningPlayer(GetBuyingUnit()), PLAYER_STATE_RESOURCE_LUMBER);
+          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "已成功兑换木材。");
+        }
+      } else if (soldUnitId == 'n00N') {
+        // 兑换5000金币 减少20工分
+        diffWorkpoint = 20;
+        if (isWorkpointEnough(workpoint, diffWorkpoint)) {
+          AdjustPlayerStateBJ(5000, GetOwningPlayer(GetBuyingUnit()), PLAYER_STATE_RESOURCE_GOLD);
+          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "已成功兑换金币。");
+        }
+      } else if (soldUnitId == 'n00L') {
+        // 兑换20力量 减少50工分
+        diffWorkpoint = 50;
+        if (isWorkpointEnough(workpoint, diffWorkpoint)) {
+          ModifyHeroStat(bj_HEROSTAT_STR, GetBuyingUnit(), bj_MODIFYMETHOD_ADD, 20);
+          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "已成功兑换力量属性。");
+        }
+      } else if (soldUnitId == 'n00P') {
+        // 兑换20敏捷 减少50工分
+        diffWorkpoint = 50;
+        if (isWorkpointEnough(workpoint, diffWorkpoint)) {
+          ModifyHeroStat(bj_HEROSTAT_AGI, GetBuyingUnit(), bj_MODIFYMETHOD_ADD, 20);
+          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "已成功兑换敏捷属性。");
+        }
+      } else if (soldUnitId == 'n00S') {
+        // 兑换20智力 减少50工分
+        diffWorkpoint = 50;
+        if (isWorkpointEnough(workpoint, diffWorkpoint)) {
+          ModifyHeroStat(bj_HEROSTAT_INT, GetBuyingUnit(), bj_MODIFYMETHOD_ADD, 20);
+          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "已成功兑换智力属性。");
+        }
+      } else if (soldUnitId == 'n019') {
+        // 兑换刷新技能冷却时间
+        diffWorkpoint = 300;
+        if (isWorkpointEnough(workpoint, diffWorkpoint)) {
+          UnitResetCooldown(GetBuyingUnit());
+          udg_PlayerDedication[playerId] = udg_PlayerDedication[playerId] + 50;
+          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "已成功刷新技能冷却时间。|n增加贡献值50点。");
+        }
+      }
+      workpoint = workpoint - diffWorkpoint;
+      if (workpoint < 0) {
+        return;
+      }
+      udg_PlayerWorkPoint[playerId] = workpoint;
+      UpdateMultiboardPlayerId(playerId);
+    }
+  }
+
+  function InitPlayerNeutralSellUnit() {
+    timer t = GetExpiredTimer();
+    trigger trg = CreateTrigger();
+    unit u = null;
+    group g = CreateGroup();
+    GroupEnumUnitsOfPlayer(g, Player(PLAYER_NEUTRAL_PASSIVE), Condition(function CondEnumPlayerNeutralPassive));
+    do {
+      u = FirstOfGroup(g);
+      if (u == null) {
+        DestroyGroup(g);
+        g = null;
+        break;
+      }
+      TriggerRegisterUnitEvent(trg, u, EVENT_UNIT_SELL);
+      GroupRemoveUnit(g, u);
+    } while(u != null);
+    //TriggerRegisterPlayerUnitEvent(trg, Player(PLAYER_NEUTRAL_PASSIVE), EVENT_PLAYER_UNIT_SELL, null);
+    TriggerAddAction(trg, function SellUnit);
+    ReleaseTimer(t);
+    trg = null;
+    t = null;
+  }
+
+
+  // 存放玩家贡献值
+  real dediPercent[];
+  real avgDedi;
+
+  function ForPlayerCalculateWorkPoint() {
+    integer playerId = GetPlayerId(GetEnumPlayer());
+    integer allocatedWorkpoint = 0;
+    if (udg_IsPlayerQualified[playerId]) {
+      dediPercent[playerId] = avgDedi;
+    }
+    allocatedWorkpoint = R2I(dediPercent[playerId] * udg_WorkPointPool);
+    udg_PlayerWorkPoint[playerId] = udg_PlayerWorkPoint[playerId] + allocatedWorkpoint;
+    DisplayTextToPlayer(GetEnumPlayer(), 0, 0, "本轮工分结算：您的贡献百分比为："+R2SW(dediPercent[playerId]*100, 4, 2)+"%，您获得到的工分为："+I2S(allocatedWorkpoint)+"。");
+  }
+
+  public function UpdateWorkPoint() {
+    // 统计公共工分池中总分，将其分配给各个玩家
+    // 当前贡献值之和
+    real dedi = 1.0;
+    integer sumDedi = 0;
+    integer maxDedi = udg_PlayerDedication[0];
+    integer avgCount = 0;
+    integer i = 0;
+    avgDedi = 0.0;
+    for (0 <= i < 8) {
+      if (udg_PlayerDedication[i] > 0) {
+        sumDedi = sumDedi + udg_PlayerDedication[i];
+        if (maxDedi < udg_PlayerDedication[i]) {
+          maxDedi = udg_PlayerDedication[i];
+        } 
+      }
+    }
+    // 玩家贡献值
+    for (0 <= i < 8) {
+      if (udg_PlayerDedication[i] >= R2I(maxDedi*0.5)) {
+        // 总贡献达到最高玩家的一半，均分剩下的工分
+        avgCount = avgCount + 1;
+        udg_IsPlayerQualified[i] = true;
+      } else if (udg_PlayerDedication[i] > 0) {
+        // 贡献不足，只能得到极少部分
+        udg_IsPlayerQualified[i] = false;
+        dediPercent[i] = I2R(udg_PlayerDedication[i]) / I2R(sumDedi);
+        dedi = dedi - dediPercent[i];
+      } else {
+        dediPercent[i] = 0;
+      }
+    }
+    // dedi 是剩下的百分比，要与avgCount除后均分
+    avgDedi = dedi / avgCount;
+    // dediPercent 是分给少数玩家的百分比，直接×总工分
+    ForForce(udg_PlayerForce, function ForPlayerCalculateWorkPoint);
+    // 工分池转移到已分配的工分池
+    udg_WorkPointPoolAllocated = udg_WorkPointPoolAllocated + udg_WorkPointPool;
+    // 工分池清零
+    udg_WorkPointPool = 0;
+  }
+
+  function onInit() {
+    timer initunitsellTimer = NewTimer();
+    // 初始化在中立英雄处合成打造、建筑处兑换物品的触发
+    TimerStart(initunitsellTimer, 1.00, false, function InitPlayerNeutralSellUnit);
+    initunitsellTimer = null;
+  }
+}

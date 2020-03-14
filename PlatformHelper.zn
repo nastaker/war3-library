@@ -1,0 +1,128 @@
+library PlatformHelper requires SystemBinary, YDWERPGScores {
+  public {
+    integer PlayerScore[];
+    integer PlayerScoreUsed[];
+    integer PlayerTitles[];
+    integer PlayerTitleCurr[];
+    string PlayerTitleStr[];
+
+    integer addedScore[];
+
+    integer WINGIDS[];
+
+    function InitWingIds() {
+      WINGIDS[0] = 'A00M';
+      WINGIDS[1] = 'A00N';
+      WINGIDS[2] = 'A00O';
+      WINGIDS[3] = 'A00P';
+      WINGIDS[4] = 'A00Q';
+    }
+
+    function InitPlayerTitleStr() {
+      PlayerTitleStr[0] = "无";
+      PlayerTitleStr[1] = "|cffffcc00元老玩家|r";
+      PlayerTitleStr[2] = "|cffff3333千人斩|r";
+      PlayerTitleStr[3] = "|cffffcc00天下无双|r";
+    }
+
+    function IsUnitHaveWing(unit u) -> boolean {
+      integer playerId = GetPlayerId(GetOwningPlayer(u));
+      boolean have = false;
+      if (havebinary(PlayerTitles[playerId], 2)) {
+        have = true;
+      }
+      u = null;
+      return have;
+    }
+
+    function UnitAddWing(unit u) {
+      if (!IsUnitType(u, UNIT_TYPE_HERO)) {
+        u = null;
+        return;
+      }
+      if (GetUnitRace(u) == RACE_HUMAN) {
+        UnitAddAbility(u, WINGIDS[0]);
+        UnitMakeAbilityPermanent(u, true, WINGIDS[0]);
+      } else if (GetUnitRace(u) == RACE_ORC) {
+        UnitAddAbility(u, WINGIDS[1]);
+        UnitMakeAbilityPermanent(u, true, WINGIDS[1]);
+      } else if (GetUnitRace(u) == RACE_UNDEAD) {
+        UnitAddAbility(u, WINGIDS[2]);
+        UnitMakeAbilityPermanent(u, true, WINGIDS[2]);
+      } else if (GetUnitRace(u) == RACE_NIGHTELF) {
+        UnitAddAbility(u, WINGIDS[3]);
+        UnitMakeAbilityPermanent(u, true, WINGIDS[3]);
+      } else {
+        UnitAddAbility(u, WINGIDS[4]);
+        UnitMakeAbilityPermanent(u, true, WINGIDS[4]);
+      }
+      u = null;
+    }
+
+    function InitPlayerPlatScore() {
+      integer i = 0;
+      for (0 <= i < 8) {
+        if (GetPlayerController(Player(i))==MAP_CONTROL_USER && GetPlayerSlotState(Player(i)) == PLAYER_SLOT_STATE_PLAYING) {
+          PlayerTitles[i] = YDWERPGGetKey(Player(i), "c+1023");
+          PlayerTitleCurr[i] = YDWERPGGetKey(Player(i), "ch");
+          PlayerScore[i] = YDWERPGGetKey(Player(i), "a+233");
+          PlayerScoreUsed[i] = YDWERPGGetKey(Player(i), "a0+10000");
+
+          if (PlayerTitleCurr[i] == 1 && !havebinary(PlayerTitles[i], 0)) {
+            YDWERPGAddKey(Player(i), "c+1023", 1);
+          }
+        }
+      }
+    }
+
+    function AddPlayerPlatScore(player p, integer score) {
+      integer playerId = GetPlayerId(p);
+      if (score <= 0) {
+        return;
+      }
+      if (addedScore[playerId] + score > 233) {
+        addedScore[playerId] = 233;
+        score = 233 - addedScore[playerId];
+      } else {
+        addedScore[playerId] = addedScore[playerId] + score;
+      }
+      YDWERPGAddKey(p, "a+233", score);
+    }
+
+    function SetPlayerTitle(player p, integer titleIndex) {
+      integer playerId = GetPlayerId(p);
+      if (titleIndex <= 0) {
+        return;
+      }
+      PlayerTitleCurr[playerId] = titleIndex;
+      YDWERPGSetKey(p, "ch", titleIndex);
+      if (!havebinary(PlayerTitles[playerId], titleIndex-1)) {
+        PlayerTitles[playerId] = PlayerTitles[playerId] + R2I(Pow(2, titleIndex-1));
+        YDWERPGAddKey(p, "c+1023", R2I(Pow(2, titleIndex-1)));
+      }
+    }
+
+    function GetPlayerTitle(integer playerid) -> string {
+      return PlayerTitleStr[PlayerTitleCurr[playerid]];
+    }
+
+    function GetPlayerScoreUsed(integer playerid) -> integer {
+      return PlayerScoreUsed[playerid];
+    }
+
+    function GivePlayerThousandKillTitle(player p) {
+      integer playerId = GetPlayerId(p);
+      if (havebinary(PlayerTitles[playerId], 2)) {
+        return;
+      }
+      DisplayTimedTextToForce(udg_PlayerForce, 30.0, "玩家"+GetPlayerName(p)+"奋勇杀敌，获得称号"+PlayerTitleStr[2]+"！" );
+      SetPlayerTitle(p, 2);
+    }
+  }
+
+  function onInit() {
+    InitWingIds();
+    InitPlayerTitleStr();
+  }
+  
+}
