@@ -1,47 +1,27 @@
-library BonusAdd {
+library BonusAdd requires SystemBinary {
 
-  constant integer ABIL_HEROINV = 'AInv';
-  constant integer RAWITEMCODE = 'XzAA';
-  constant integer COUNT = 15;
-  constant integer powersOf2[COUNT];
+  constant integer ABIL_INV_ID = 'AInv';
+  constant integer ITEM_ATK_ID = 'XzAA';
 
-  public function AddUnitAtk(unit u, integer amount){
+  public function UnitAtkAdd(unit u, integer amount){
     integer i = COUNT;
     boolean needInv = false;
     if (amount <= 0) {
       return;
     }
-    if (GetUnitAbilityLevel(u, ABIL_HEROINV) == 0) {
-      UnitAddAbility(u, ABIL_HEROINV);
+    if (GetUnitAbilityLevel(u, ABIL_INV_ID) == 0) {
+      UnitAddAbility(u, ABIL_INV_ID);
       needInv = true;
     }
     while (i > 0) {
       i = i - 1;
       if (amount >= powersOf2[i]) {
         amount = amount - powersOf2[i];
-        UnitAddItemById(u, RAWITEMCODE + i);
+        UnitAddItemById(u, ITEM_ATK_ID + i);
       }
     }
     if (needInv) {
-      UnitRemoveAbility(u, ABIL_HEROINV);
+      UnitRemoveAbility(u, ABIL_INV_ID);
     }
-  }
-
-  function onInit(){
-    powersOf2[0] = 1;
-    powersOf2[1] = 2;
-    powersOf2[2] = 4;
-    powersOf2[3] = 8;
-    powersOf2[4] = 16;
-    powersOf2[5] = 32;
-    powersOf2[6] = 64;
-    powersOf2[7] = 128;
-    powersOf2[8] = 256;
-    powersOf2[9] = 512;
-    powersOf2[10] = 1024;
-    powersOf2[11] = 2048;
-    powersOf2[12] = 4096;
-    powersOf2[13] = 8192;
-    powersOf2[14] = 16384;
   }
 }

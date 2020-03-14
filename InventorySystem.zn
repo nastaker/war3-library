@@ -1,6 +1,0 @@
-
-library NasInventorySystem {
-    function onInit(){
-        BJDebugMsg("Hello World")
-    }
-}

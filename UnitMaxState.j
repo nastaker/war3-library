@@ -98,7 +98,7 @@ private function Initialize takes nothing returns nothing
     set i = 1
     set POWERS_OF_2[0] = 1
     loop
-        exitwhen i == ABILITY_COUNT * 2 * 2 * 3 + 1
+        exitwhen i == ABILITY_COUNT * 3 + 1
         
         set POWERS_OF_2[i] = POWERS_OF_2[i - 1] * 2
         set i = i + 1
