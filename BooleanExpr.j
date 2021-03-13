@@ -1,6 +1,6 @@
 library BooleanExpr
   function BoolepxrAllyOrEnemy takes nothing returns boolean
-    if GetUnitState(GetFilterUnit(),UNIT_STATE_LIFE) < 0.45 then
+    if GetUnitState(GetFilterUnit(),UNIT_STATE_LIFE) < 0.405 then
       return false
     endif
     if IsUnitType(GetFilterUnit(),UNIT_TYPE_STRUCTURE)==true then
@@ -19,7 +19,7 @@ library BooleanExpr
   endfunction
 
   function BoolepxrAllyUnit takes nothing returns boolean
-    if GetUnitState(GetFilterUnit(),UNIT_STATE_LIFE) < 0.45 then
+    if GetUnitState(GetFilterUnit(),UNIT_STATE_LIFE) < 0.405 then
       return false
     endif
     if IsUnitType(GetFilterUnit(),UNIT_TYPE_STRUCTURE)==true then
@@ -38,7 +38,7 @@ library BooleanExpr
   endfunction
 
   function BoolepxrEnemyUnit takes nothing returns boolean
-    if GetUnitState(GetFilterUnit(),UNIT_STATE_LIFE) < 0.45 then
+    if GetUnitState(GetFilterUnit(),UNIT_STATE_LIFE) < 0.405 then
       return false
     endif
     if IsUnitType(GetFilterUnit(),UNIT_TYPE_STRUCTURE)==true then
@@ -56,8 +56,30 @@ library BooleanExpr
     return true
   endfunction
 
+  function BoolepxrEnemyUnitNoTarget takes nothing returns boolean
+    if GetUnitState(GetFilterUnit(),UNIT_STATE_LIFE) < 0.405 then
+      return false
+    endif
+    if GetFilterUnit() == GetSpellTargetUnit() then
+      return false
+    endif
+    if IsUnitType(GetFilterUnit(),UNIT_TYPE_STRUCTURE)==true then
+      return false
+    endif
+    if IsUnitType(GetFilterUnit(),UNIT_TYPE_MECHANICAL)==true then
+      return false
+    endif
+    if IsUnitType(GetFilterUnit(),UNIT_TYPE_MAGIC_IMMUNE)==true then
+      return false
+    endif
+    if IsUnitAlly(GetFilterUnit(), GetOwningPlayer(GetTriggerUnit())) then
+      return false
+    endif
+    return true
+  endfunction
+
   function BoolepxrAliveAllyOrUndeadEnemy takes nothing returns boolean
-    if GetUnitState(GetFilterUnit(),UNIT_STATE_LIFE) < 0.45 then
+    if GetUnitState(GetFilterUnit(),UNIT_STATE_LIFE) < 0.405 then
       return false
     endif
     if IsUnitType(GetFilterUnit(),UNIT_TYPE_STRUCTURE)==true then
@@ -82,7 +104,7 @@ library BooleanExpr
   endfunction
 
   function BoolepxrUndeadAllyOrAliveEnemy takes nothing returns boolean
-  if GetUnitState(GetFilterUnit(),UNIT_STATE_LIFE) < 0.45 then
+  if GetUnitState(GetFilterUnit(),UNIT_STATE_LIFE) < 0.405 then
     return false
   endif
   if IsUnitType(GetFilterUnit(),UNIT_TYPE_STRUCTURE)==true then
@@ -107,7 +129,7 @@ library BooleanExpr
   endfunction
 
   function BoolepxrAllMoveEnemy takes nothing returns boolean
-    if GetUnitState(GetFilterUnit(),UNIT_STATE_LIFE) < 0.45 then
+    if GetUnitState(GetFilterUnit(),UNIT_STATE_LIFE) < 0.405 then
       return false
     endif
     if IsUnitType(GetFilterUnit(),UNIT_TYPE_STRUCTURE)==true then
@@ -120,7 +142,7 @@ library BooleanExpr
   endfunction
 
   function BoolepxrEnemyUnitNoFly takes nothing returns boolean
-    if GetUnitState(GetFilterUnit(),UNIT_STATE_LIFE) < 0.45 then
+    if GetUnitState(GetFilterUnit(),UNIT_STATE_LIFE) < 0.405 then
       return false
     endif
     if IsUnitType(GetFilterUnit(),UNIT_TYPE_STRUCTURE)==true then

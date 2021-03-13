@@ -70,6 +70,7 @@ library InitGamePassiveObjects requires BonusAdd, NBonusMod {
     RandomItemIdDict[63] = 'fgfh';
     RandomItemIdDict[64] = 'infs';
     RandomItemIdDict[65] = 'rlif';
+    RandomItemIdDict[66] = 'pomn';
   }
 
   function GenerateStockRandomItems() {
@@ -77,20 +78,20 @@ library InitGamePassiveObjects requires BonusAdd, NBonusMod {
     integer itemId = 0;
     integer itemIndex = 0;
 
-    for(0 <= i < 10) {
+    for(0 <= i <= 10) {
       // 清空现有市场内所有售卖物品
       RemoveItemFromAllStock(RandomItemIdDict[i]);
     }
 
-    for(0 <= i < 11) {
+    for(0 <= i <= 10) {
       // 重新随机市场售卖物品
-      itemIndex = GetRandomInt(11, 65-i);
+      itemIndex = GetRandomInt(11, 66-i);
       itemId = RandomItemIdDict[i];
       RandomItemIdDict[i] = RandomItemIdDict[itemIndex];
       RandomItemIdDict[itemIndex] = itemId;
       
-      itemId = RandomItemIdDict[65-i];
-      RandomItemIdDict[65-i] = RandomItemIdDict[itemIndex];
+      itemId = RandomItemIdDict[66-i];
+      RandomItemIdDict[66-i] = RandomItemIdDict[itemIndex];
       RandomItemIdDict[itemIndex] = itemId;
 
       AddItemToAllStock(RandomItemIdDict[i], 1, 1);
@@ -100,6 +101,7 @@ library InitGamePassiveObjects requires BonusAdd, NBonusMod {
   function InitBandits() {
     unit u;
     integer i = 0;
+    integer x = 100;
     real minX;
     real maxX;
     real minY;
@@ -114,33 +116,48 @@ library InitGamePassiveObjects requires BonusAdd, NBonusMod {
     banditType[5] = 'nbld';
 
     if (areaIndex == 0) {
+      // 左侧
       minX = -9700;
-      maxX = -8192;
-      minY = -9700;
-      maxY = 4100;
+      maxX = -6656;
+      minY = -4096;
+      maxY = 3072;
+      x = 200;
     } else if (areaIndex == 1) {
-      minX = 8192;
+      // 右侧
+      minX = 6656;
       maxX = 9700;
-      minY = -9700;
-      maxY = 3000;
+      minY = -4096;
+      maxY = 3072;
+      x = 200;
     } else if (areaIndex == 2) {
+      // 左边上半
       minX = -8192;
-      maxX = -3500;
-      minY = 1600;
-      maxY = 4100;
+      maxX = -1280;
+      minY = 768;
+      maxY = 3072;
     } else if (areaIndex == 3) {
-      minX = 3500;
+      // 右边上半
+      minX = 1280;
       maxX = 8192;
-      minY = 600;
-      maxY = 3500;
+      minY = 768;
+      maxY = 3072;
     }
 
     for (0 <= i < 4) {
-      CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), 'ngol', GetRandomReal(minX, maxX), GetRandomReal(minY, maxY), 270);
+      AddResourceAmount(CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), 'ngol', GetRandomReal(minX, maxX), GetRandomReal(minY, maxY), 270), 987500);
     }
     
-    for (0 <= i < 100) {
+    for (0 <= i < x) {
       CreateDestructable('BTtw', GetRandomReal(minX, maxX), GetRandomReal(minY, maxY), 270, .8 + (.2 * ModuloInteger(i,3)), ModuloInteger(i,10) );
+    }
+
+    
+    if (areaIndex == 0) {
+      maxX = maxX - 512;
+    } else if (areaIndex == 1) {
+      minX = minX + 512;
+    } else if (areaIndex == 2 || areaIndex == 3) {
+      minY = minY + 256;
     }
 
     for (0 <= i < 50) {
@@ -167,6 +184,7 @@ library InitGamePassiveObjects requires BonusAdd, NBonusMod {
     integer j = 0;
     integer k = 0;
     integer n = 0;
+    integer yz = 0;
     real x = 0;
     real y = 0;
     for (0 <= i < 8) {
@@ -178,47 +196,31 @@ library InitGamePassiveObjects requires BonusAdd, NBonusMod {
       }
       x = GetLocationX(udg_Loc[(10 + i)]);
       y = GetLocationY(udg_Loc[(10 + i)]);
-      AddResourceAmount(CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), 'ngol', x + 512, y + k, 270), 87500);
-      AddResourceAmount(CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), 'ngol', x - 512, y + k, 270), 87500);
+      AddResourceAmount(CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), 'ngol', x + 512, y + k, 270), 987500);
+      AddResourceAmount(CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), 'ngol', x - 512, y + k, 270), 987500);
       
       if (i == 0 || i == 1 || i == 4 || i == 5) {
-        y = GetLocationY(udg_Loc[(10 + i)]) + 640;
+        yz = 1;
       } else {
-        y = GetLocationY(udg_Loc[(10 + i)]) + 1600;
+        yz = -1;
       }
-
-
-      x = GetLocationX(udg_Loc[(10 + i)]) - 1088;
+      y = GetLocationY(udg_Loc[(10 + i)]) + (768 * yz);
+      x = GetLocationX(udg_Loc[(10 + i)]) - 1472;
       // 左侧树
-      for (0 <= j < 3) {
-        for (0 <= k < 19) {
+      for (0 <= j < 4) {
+        for (0 <= k < 14) {
           n = n + 1;
-          CreateDestructable('BTtw', x - 128 * j, y - 128 * k, 270, .8 + (.2 * ModuloInteger(n,3)), ModuloInteger(n,10) );
+          CreateDestructable('BTtw', x + 128 * j, y - (yz*(128 * k)), 270, .8 + (.2 * ModuloInteger(n,3)), ModuloInteger(n,10) );
         }
       }
-      if (i == 0 || i == 1 || i == 4 || i == 5) {
-        // 上侧树
-        for (0 <= j < 22) {
-          for (0 <= k < 2) {
+      if (i == 1 || i == 3 || i == 5 || i == 7) {
+        // 右侧树
+        x = GetLocationX(udg_Loc[(10 + i)]) + 1472;
+        for (0 <= j < 4) {
+          for (0 <= k < 14) {
             n = n + 1;
-            CreateDestructable('BTtw', x - 256 + 128 * j, y + 128 * (k+1), 270, .8 + (.2 * ModuloInteger(n,3)), ModuloInteger(n,10) );
+            CreateDestructable('BTtw', x - 128 * j, y - (yz*(128 * k)), 270, .8 + (.2 * ModuloInteger(n,3)), ModuloInteger(n,10) );
           }
-        }
-      } else {
-        // 下侧树
-        for (0 <= j < 22) {
-          for (0 <= k < 2) {
-            n = n + 1;
-            CreateDestructable('BTtw', x - 256 + 128 * j, y - 128 * (k+19), 270, .8 + (.2 * ModuloInteger(n,3)), ModuloInteger(n,10) );
-          }
-        }
-      }
-      // 右侧树
-      x = GetLocationX(udg_Loc[(10 + i)]) + 1344;
-      for (0 <= j < 3) {
-        for (0 <= k < 19) {
-          n = n + 1;
-          CreateDestructable('BTtw', x - 128 * j, y - 128 * k, 270, .8 + (.2 * ModuloInteger(n,3)), ModuloInteger(n,10) );
         }
       }
     }

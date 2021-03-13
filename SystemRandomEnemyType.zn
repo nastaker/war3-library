@@ -1,12 +1,13 @@
-library SystemRandomEnemyType {
+library SystemRandomEnemyType requires NBonusMod {
 
-  integer UnitTypeId[];
+  public integer UnitTypeId[];
   integer UnitTypeTopIndex[];
   integer UnitTypeBeforeCount[];
   string EnemyTypeStr[];
+  string EnemyBossStr;
   integer EnemyTypeCount;
 
-  function InitEnemyTypes() {
+  function InitUnitTypeDicts() {
     UnitTypeId[0] = 'nrzs';
     UnitTypeId[1] = 'ngna';
     UnitTypeId[2] = 'nkob';
@@ -320,60 +321,62 @@ library SystemRandomEnemyType {
     UnitTypeId[310] = 'nsll';
     UnitTypeId[311] = 'nfod';
     UnitTypeId[312] = 'nadr';
-    // 自定义单位类型，不在五行之中
-    UnitTypeId[313] = 'uC22';
-    UnitTypeId[314] = 'eC07';
+    UnitTypeId[312] = 'nadr';
+    UnitTypeId[313] = 'nina';
 
-    UnitTypeTopIndex[0] = 30;
-    UnitTypeTopIndex[1] = 39;
-    UnitTypeTopIndex[2] = 58;
-    UnitTypeTopIndex[3] = 35;
-    UnitTypeTopIndex[4] = 38;
-    UnitTypeTopIndex[5] = 43;
-    UnitTypeTopIndex[6] = 18;
-    UnitTypeTopIndex[7] = 19;
-    UnitTypeTopIndex[8] = 10;
-    UnitTypeTopIndex[9] = 13;
+    // UnitTypeTopIndex[0] = 30;
+    // UnitTypeTopIndex[1] = 39;
+    // UnitTypeTopIndex[2] = 58;
+    // UnitTypeTopIndex[3] = 35;
+    // UnitTypeTopIndex[4] = 38;
+    // UnitTypeTopIndex[5] = 43;
+    // UnitTypeTopIndex[6] = 18;
+    // UnitTypeTopIndex[7] = 19;
+    // UnitTypeTopIndex[8] = 10;
+    // UnitTypeTopIndex[9] = 14;
 
-    UnitTypeBeforeCount[0] = 0;
-    UnitTypeBeforeCount[1] = 31;
-    UnitTypeBeforeCount[2] = 71;
-    UnitTypeBeforeCount[3] = 130;
-    UnitTypeBeforeCount[4] = 166;
-    UnitTypeBeforeCount[5] = 205;
-    UnitTypeBeforeCount[6] = 249;
-    UnitTypeBeforeCount[7] = 268;
-    UnitTypeBeforeCount[8] = 288;
-    UnitTypeBeforeCount[9] = 299;
+    // UnitTypeBeforeCount[0] = 0;
+    // UnitTypeBeforeCount[1] = 31;
+    // UnitTypeBeforeCount[2] = 71;
+    // UnitTypeBeforeCount[3] = 130;
+    // UnitTypeBeforeCount[4] = 166;
+    // UnitTypeBeforeCount[5] = 205;
+    // UnitTypeBeforeCount[6] = 249;
+    // UnitTypeBeforeCount[7] = 268;
+    // UnitTypeBeforeCount[8] = 288;
+    // UnitTypeBeforeCount[9] = 299;
 
+    // 自定义单位类型
+    UnitTypeId[323] = 'uC22';
+    UnitTypeId[324] = 'eC07';
+    
+    // 敌军将领
+    UnitTypeId[400] = 'uC01';
+    UnitTypeId[401] = 'uC02';
+    UnitTypeId[402] = 'hC08';
+    UnitTypeId[403] = 'n00Z';
+    UnitTypeId[404] = 'eC05';
+    UnitTypeId[405] = 'OC03';
+    UnitTypeId[406] = 'uC09';
+    UnitTypeId[407] = 'uC10';
+    UnitTypeId[408] = 'nC23';
+    UnitTypeId[409] = 'n00X';
+    UnitTypeId[410] = 'nC25';
+    UnitTypeId[411] = 'n007';
+    UnitTypeId[412] = 'n00E';
+    UnitTypeId[413] = 'n00C';
+    UnitTypeId[414] = 'nC24';
+    UnitTypeId[415] = 'n00D';
+
+
+    EnemyTypeStr[0] = "025,008;028,021;045,067;106,194;006,107;153,049;123;218;112,206;213;196,193;061,226;282,279;095,202;288;307,309,303,301,312,299;";
+    EnemyTypeStr[1] = "000,027;003,048,070,074;024,085,172;080,088;013,051,065,189;052,037,103,145,164,235;151,244;142,274;022,089,108;087,171,278;078,219,254;075,170,286;279;001,029,083,118,124,168;042,019,155,128,173,224,291;306,311,313;";
+    EnemyTypeStr[2] = "101;323;045;067;324;153;106,194,221;280;076;213;098,193;180,260;201,128;077,095,202;288;309;";
+    EnemyBossStr = "400;401;402;403;404;405;406;407;408;409;410;411;412;413;414;415;";
     EnemyTypeCount = 3;
-    EnemyTypeStr[0] = "025,008;028,021;045,067;106,194;006,107;153,049;123;218;112,206;213;196,193;061,226;282,279;002,077,095,202;121,230,288;112,206,307,116,228,309,113,246,303,082,207,301,076,237,312,079,232,299;";
-    EnemyTypeStr[1] = "000,027;003,048,070,074;024,085,172;080,088;013,051,065,189;052,037,103,145,164,235;151,244;142,274;022,089,108;087,171,278;078,219,254,306;075,170,286;279;001,029,083,118,124,168;042,019,155,128,173,224,291;009,035,036,090,161,187,205,093,115,163,176,242,281,283,294,308;";
-    EnemyTypeStr[2] = "101;313;045;067;314;153;106,194,221,280;305;076;213;098,193;180,260;201,128;077,095,202;288;309;";
-    // 异教徒： 024,085,172;
   }
 
-  function InitLeaders() {
-    // 每波BOSS
-    udg_Leader[0] = 'uC01';
-    udg_Leader[1] = 'uC02';
-    udg_Leader[2] = 'hC08';
-    udg_Leader[3] = 'n00Z';
-    udg_Leader[4] = 'eC05';
-    udg_Leader[5] = 'OC03';
-    udg_Leader[6] = 'uC09';
-    udg_Leader[7] = 'uC10';
-    udg_Leader[8] = 'nC23';
-    udg_Leader[9] = 'n00X';
-    udg_Leader[10] = 'nC25';
-    udg_Leader[11] = 'n007';
-    udg_Leader[12] = 'n00E';
-    udg_Leader[13] = 'n00C';
-    udg_Leader[14] = 'nC24';
-    udg_Leader[15] = 'n00D';
-  }
-
-  public function InitEnemies() {
+  public function InitEnemyTypes() {
     integer i = 0, j = 0, k = 0;
     integer start = 0;
     integer lastIndex = 0;
@@ -381,11 +384,12 @@ library SystemRandomEnemyType {
     integer wave = 0;
     integer typecount = 0;
     string str = EnemyTypeStr[GetRandomInt(0, EnemyTypeCount-1)];
+    // 初始化敌军单位
     for (0 <= i < StringLength(str)) {
       if (SubString(str, i, i+1) == ";") {
         typecount = (i+1)/4 - lastCount;
         udg_EnemyTypeCount[wave] = typecount;
-        udg_EnemyCount[wave] = 0;
+        udg_EnemyCount[wave] = 240 + 20 * wave;
         for (0 <= j < typecount) {
           start = lastIndex + j * 4;
           udg_EnemyType[k] = UnitTypeId[S2I(SubString(str, start, start + 3))];
@@ -398,11 +402,132 @@ library SystemRandomEnemyType {
     }
     // 总波数
     udg_TotalRoundIndex = 15;
+    // 最后一波敌人数量
     udg_EnemyCount[udg_TotalRoundIndex] = 1000;
+    // 初始化敌军将领
+    wave = 0;
+    lastIndex = 0;
+    lastCount = 0;
+    k = 0;
+    for (0 <= i < StringLength(EnemyBossStr)) {
+      if (SubString(EnemyBossStr, i, i+1) == ";") {
+        typecount = (i+1)/4 - lastCount;
+        // udg_EnemyBossTypeCount[wave] = typecount;
+        // udg_EnemyBossCount[wave] = 1;
+        for (0 <= j < typecount) {
+          start = lastIndex + j * 4;
+          udg_Leader[k] = UnitTypeId[S2I(SubString(EnemyBossStr, start, start + 3))];
+          k = k + 1;
+        }
+        wave = wave + 1;
+        lastIndex = i + 1;
+        lastCount = lastCount + typecount;
+      }
+    }
+  }
+
+  function SpawnEnemy(player p, integer typeid, real x, real y, real face, boolean isStrengthen, boolean isAssassin) -> unit {
+    integer hp;
+    integer atkspd = R2I(udg_RoundIndex * 5);
+    integer atk = R2I(udg_EnemyAttackRatio * Pow(udg_RoundIndex, 2) + udg_EnemyAttack*udg_RoundIndex*Pow(udg_EnemyAttackGrowRatio, udg_RoundIndex));
+    integer armor = R2I(udg_EnemyDefBase + udg_RoundIndex * udg_EnemyDef * Pow(udg_EnemyDefGrowRatio, udg_RoundIndex));
+    unit u;
+    real scale = 1;
+    u = CreateUnit(p, typeid, x, y, face);
+    hp = Max(R2I(udg_EnemyHPBase + udg_RoundIndex * udg_EnemyHP * Pow(udg_EnemyHPGrowRatio, udg_RoundIndex)), R2I(GetUnitState(u, UNIT_STATE_MAX_LIFE)));
+    
+    if (isAssassin) {
+      UnitAddAbility(u, 'Agho');
+      UnitMakeAbilityPermanent(u, true, 'Agho');
+      SetUnitVertexColor(u, 63, 63, 63, 127);
+    }
+    if (isStrengthen) {
+      if (GetUnitAbilityLevel(u, 'A029') == 0) {
+        UnitAddAbility(u, 'A029');
+        UnitMakeAbilityPermanent(u, true, 'A029');
+      }
+      if (IsUnitType(u, UNIT_TYPE_RANGED_ATTACKER)) {
+        scale = scale + udg_RoundIndex * 0.05;
+        SetUnitVertexColor(u, 255, 63, 63, 255);
+        SetUnitScale(u, scale, scale, scale);
+      } else {
+        scale = scale + udg_RoundIndex * 0.10;
+        SetUnitVertexColor(u, 63, 255, 63, 255);
+        SetUnitScale(u, scale, scale, scale);
+      }
+
+      atk = R2I(atk * udg_EliteStrengthenRatio);
+      atkspd = R2I(atkspd * udg_EliteStrengthenRatio);
+      armor = R2I(armor * udg_EliteStrengthenRatio);
+      hp = R2I(hp * udg_EliteStrengthenRatio);
+      SetUnitExploded(u, true);
+    }
+    if (IsUnitType(u, UNIT_TYPE_FLYING)) {
+      atk = R2I(atk * udg_EnemyFlyingAttrRatio);
+      atkspd = R2I(atkspd * udg_EnemyFlyingAttrRatio);
+      armor = R2I(armor * udg_EnemyFlyingAttrRatio);
+      hp = R2I(hp * udg_EnemyFlyingAttrRatio);
+    }
+    
+    UnitAtkSpdAdd(u, atkspd);
+    UnitAtkAdd(u, atk);
+    UnitArmorAdd(u, armor);
+    UnitMaxLifeSet(u, hp);
+    return u;
+  }
+
+  public function SpawnBoss() {
+    integer extrahp = R2I(udg_LeaderHPExtra * udg_RoundIndex * Pow(udg_LeaderHPGrowRatio, udg_RoundIndex));
+    udg_Boss = CreateUnit(Player(8), udg_Leader[udg_RoundIndex], GetLocationX(udg_Loc[0]), GetLocationY(udg_Loc[0]), 270.);
+    UnitAtkSpdAdd(udg_Boss, udg_RoundIndex * 5 );
+    UnitAtkAdd(udg_Boss, R2I(udg_EnemyAttackRatio * Pow(udg_RoundIndex, 2) + udg_EnemyAttack*udg_RoundIndex*Pow(udg_EnemyAttackGrowRatio, udg_RoundIndex)) );
+    UnitArmorAdd(udg_Boss, R2I(udg_EnemyDefBase + udg_RoundIndex * udg_EnemyDef * Pow(udg_EnemyDefGrowRatio, udg_RoundIndex)) );
+    UnitMaxLifeSet(udg_Boss, R2I(GetUnitState(udg_Boss, UNIT_STATE_MAX_LIFE)) + extrahp);
+  }
+
+  public function SpawnFrontEnemy() {
+    integer i,j,random;
+    boolean isElite = false;
+    unit u;
+    for (0 <= j < udg_SpawnRow) {
+      if (udg_EliteUnitCount < (udg_EliteMaxCount * udg_RoundIndex) && GetRandomInt(1, 100) <= udg_EliteRatio) {
+        isElite = true;
+        udg_EliteUnitCount = udg_EliteUnitCount + udg_SpawnColumn;
+      }
+      for (1 <= i <= udg_SpawnColumn) {
+        u = SpawnEnemy(Player(7+i), udg_EnemyType[(udg_EnemySpawnedIndex + udg_TypeIndex)], GetLocationX(udg_Loc[i]), GetLocationY(udg_Loc[i]) + 128.*j, 270, isElite, false);
+        IssuePointOrderLoc(u, "attack", udg_Loc[5]);
+        SetUnitUserData(u, (i/2) );
+      }
+    }
+    udg_TypeIndex = udg_TypeIndex + 1;
+    udg_SpawnedCount = udg_SpawnedCount + udg_SpawnColumn * udg_SpawnRow;
+    if (udg_TypeIndex >= udg_EnemyTypeCount[udg_RoundIndex]) {
+      udg_TypeIndex = 0;
+    }
+  }
+
+  public function SpawnStrikeEnemy() {
+    integer i,j, random;
+    boolean isAssassin = false;
+    unit u;
+    if (GetRandomInt(1,100) <= udg_StrikeInvProb ) {
+      isAssassin = true;
+    }
+    for (0 <= j < udg_SpawnRow) {
+      for (1 <= i <= udg_SpawnColumn) {
+        u = SpawnEnemy(Player(7+i), udg_EnemyType[(udg_EnemySpawnedIndex + udg_TypeIndex)], -512+i*256, GetLocationY(udg_Loc[6]) + 128.*j, 90, true, isAssassin);
+        IssuePointOrderLoc(u, "attack", udg_Loc[5]);
+        SetUnitUserData(u, (i/2) );
+      } 
+    }
+    udg_TypeIndex = udg_TypeIndex + 1;
+    if (udg_TypeIndex >= udg_EnemyTypeCount[udg_RoundIndex]) {
+      udg_TypeIndex = 0;
+    }
   }
 
   function onInit() {
-    InitEnemyTypes();
-    InitLeaders();
+    InitUnitTypeDicts();
   }
 }

@@ -1,27 +1,33 @@
 library UnitGroupSpell {
 
   boolexpr SpellTargetCondition;
+  integer MAJA_ID = 'n00I';
 
   function InitGroupSpells() {
     // 可以进行群体释放的法术列表
-    SaveBoolean(ht, 'ANtm', 'gspl', true);
     SaveBoolean(ht, 'AEsh', 'gspl', true);
     SaveBoolean(ht, 'AHtb', 'gspl', true);
     SaveBoolean(ht, 'AHhb', 'gspl', true);
     SaveBoolean(ht, 'AHbn', 'gspl', true);
     SaveBoolean(ht, 'AOhx', 'gspl', true);
+    SaveBoolean(ht, 'AOcl', 'gspl', true);
+    SaveBoolean(ht, 'AOhw', 'gspl', true);
     SaveBoolean(ht, 'AUdc', 'gspl', true);
     SaveBoolean(ht, 'AUfn', 'gspl', true);
     SaveBoolean(ht, 'AEer', 'gspl', true);
     SaveBoolean(ht, 'ANso', 'gspl', true);
+    SaveBoolean(ht, 'ANdo', 'gspl', true);
     SaveBoolean(ht, 'A01D', 'gspl', true);
+    SaveReal(ht, 'A01D', 'rang', 600.);
+    // 技能是否持续施法技能
     // 群体释放时，马甲释放的技能
     SaveInteger(ht, 'A01D', 'fabi', 'A01E');
-    // 技能群体释放，最大目标数量=系数*技能等级
-    SaveInteger(ht, 'AUfn', 'mult', 1);
-    SaveInteger(ht, 'AEer', 'mult', 1);
-    SaveInteger(ht, 'AOhx', 'mult', 1);
-    SaveInteger(ht, 'AHbn', 'mult', 1);
+    // 技能群体释放，最大目标数量
+    SaveInteger(ht, 'AOhw', 'mult', 2);
+    SaveInteger(ht, 'AOcl', 'mult', 2);
+    SaveInteger(ht, 'ANch', 'mult', 2);
+    SaveInteger(ht, 'ANdo', 'mult', 2);
+    SaveInteger(ht, 'A01D', 'mult', 999);
     // 技能群体释放，需要满足条件
     SaveBooleanExprHandle(ht, 'A01D', 'cond', Condition(function BoolepxrAllMoveEnemy));
     SaveBooleanExprHandle(ht, 'AHbn', 'cond', Condition(function BoolepxrAllyOrEnemy));
@@ -32,12 +38,13 @@ library UnitGroupSpell {
 
   function UnitGroupSpellAction() -> boolean {
     boolean isValid = true;
+    boolean isNeedEnd = false;
     integer abilityId = GetSpellAbilityId();
     integer fakeAbilityId = 0;
-    integer maxUnit = 0;
     integer mult = 0;
     real x = 0;
     real y = 0;
+    real range = 0;
     group g = null;
     unit maja = null;
     unit u = null;
@@ -47,7 +54,7 @@ library UnitGroupSpell {
       isValid = false;
     } else if (!IsUnitType(hero, UNIT_TYPE_HERO) && GetUnitAbilityLevel(hero, 'ACrk') == 0 && GetUnitAbilityLevel(hero, 'ACsk') == 0) {
       isValid = false;
-    } else if (GetUnitTypeId(hero) == 'n00I') {
+    } else if (GetUnitTypeId(hero) == MAJA_ID) {
       isValid = false;
     }
 
@@ -62,33 +69,35 @@ library UnitGroupSpell {
     }
     mult = LoadInteger(ht, abilityId, 'mult');
     if (mult == 0) {
-      // 若没有规定系数，默认系数为2
-      mult = 2;
-    }
-    maxUnit = GetUnitAbilityLevel(hero, abilityId) * mult;
-    if (maxUnit <= 1) {
-      hero = null;
-      return false;
+      // 若没有规定，默认为6
+      mult = 6;
     }
     SpellTargetCondition = LoadBooleanExprHandle(ht, abilityId, 'cond');
     if (SpellTargetCondition == null) {
-      // 没有规定目标类型，默认为所有敌人单位
-      SpellTargetCondition = Condition(function BoolepxrEnemyUnit);
+      // 没有规定目标类型，默认为非目标的敌人单位
+      SpellTargetCondition = Condition(function BoolepxrEnemyUnitNoTarget);
     }
+    isNeedEnd = LoadBoolean(ht, abilityId, 'splC');
     x = GetSpellTargetX();
     y = GetSpellTargetY();
     g = CreateGroup();
-    GroupEnumUnitsInRange(g, x, y, 300., SpellTargetCondition);
+    range = LoadReal(ht, abilityId, 'rang');
+    if (range == 0) {
+      range = 300;
+    }
+    GroupEnumUnitsInRange(g, x, y, range, SpellTargetCondition);
     do {
       u = FirstOfGroup(g);
       GroupRemoveUnit(g, u);
-      maja = CreateUnit(GetOwningPlayer(hero), 'n00I', GetUnitX(hero), GetUnitY(hero), GetUnitFacing(hero));
+      maja = CreateUnit(GetOwningPlayer(hero), MAJA_ID, GetUnitX(hero), GetUnitY(hero), GetUnitFacing(hero));
       UnitAddAbility(maja, fakeAbilityId);
       SetUnitAbilityLevel(maja, fakeAbilityId, GetUnitAbilityLevel(hero,abilityId));
       IssueTargetOrderById(maja, GetUnitCurrentOrder(hero), u);
-      UnitApplyTimedLife( maja, 'BHwe', 5.00 );
-      maxUnit = maxUnit - 1;
-    } while (maxUnit > 0 && FirstOfGroup(g) != null);
+      if (!isNeedEnd) {
+        UnitApplyTimedLife( maja, 'BHwe', 5.00 );
+      }
+      mult = mult - 1;
+    } while (mult > 0 && FirstOfGroup(g) != null);
     DestroyGroup(g);
     u = null;
     maja = null;
@@ -99,16 +108,47 @@ library UnitGroupSpell {
     return false;
   }
 
+  function BoolexprPlayerMaja() -> boolean {
+    if (GetUnitTypeId(GetFilterUnit()) == MAJA_ID) {
+      return true;
+    }
+    return false;
+  }
+
+  function UnitGroupSpellEndCast() -> boolean {
+    integer abilityId = GetSpellAbilityId();
+    unit u = null;
+    group g = null;
+    boolean isNeedEnd = LoadBoolean(ht, abilityId, 'splC');
+    if (isNeedEnd) {
+      g = CreateGroup();
+      GroupEnumUnitsOfPlayer(g, GetOwningPlayer(GetTriggerUnit()), Condition(function BoolexprPlayerMaja));
+      do {
+        u = FirstOfGroup(g);
+        RemoveUnit(u);
+        GroupRemoveUnit(g, u);
+      } while (u != null);
+      DestroyGroup(g);
+      g = null;
+      u = null;
+    }
+    return false;
+  }
+
 
   function onInit() {
     integer i = 0;
     trigger trg = CreateTrigger();
+    trigger trgSpellEnd = CreateTrigger();
 
     InitGroupSpells();
     for (0 <= i < 12) {
       TriggerRegisterPlayerUnitEvent(trg, Player(i), EVENT_PLAYER_UNIT_SPELL_EFFECT, null);
+      TriggerRegisterPlayerUnitEvent(trgSpellEnd, Player(i), EVENT_PLAYER_UNIT_SPELL_ENDCAST, null);
     }
     TriggerAddCondition(trg, Condition(function UnitGroupSpellAction));
+    TriggerAddCondition(trgSpellEnd, Condition(function UnitGroupSpellEndCast));
     trg = null;
+    trgSpellEnd = null;
   }
 }

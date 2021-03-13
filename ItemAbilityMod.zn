@@ -41,7 +41,6 @@ library ItemAbilityMod requires TimerUtils, NBonusMod {
     SaveStr(ht, 'I108', ITEM_ATTR, "+00000+00000+00000+00000+00000+00000+00020+00000+00000+00000");
     SaveStr(ht, 'I109', ITEM_ATTR, "+00000+00000+00000+00000+00000+00000+00025+00000+00000+00000");
     SaveStr(ht, 'I10A', ITEM_ATTR, "+00000+00000+00000+00000+00000+00000+00025+00000+00000+00000");
-    
     SaveStr(ht, 'I006', ITEM_ATTR, "+00000+00000+00000+00000+01000+00000+00000+00000+00000+00000");
 
     ReleaseTimer(t);
@@ -49,18 +48,12 @@ library ItemAbilityMod requires TimerUtils, NBonusMod {
   }
 
   function UnitAttrRecalculation(integer ispickup) {
-    unit hero = null;
+    unit hero = GetManipulatingUnit();
     item mItem = GetManipulatedItem();
     integer value = 0;
     integer base = 0;
     string ItemAbils = null;
     integer i;
-    // 判断拾取物品是否有属性
-    if (!HaveSavedString(ht, GetItemTypeId(mItem), ITEM_ATTR)) {
-      mItem = null;
-      return;
-    }
-    hero = GetManipulatingUnit();
     ItemAbils = LoadStr(ht, GetItemTypeId(mItem), ITEM_ATTR);
     for (0 <= i < ATTR_COUNT) {
       value = S2I(SubString(ItemAbils, i*NUM_SPACE, (i+1)*NUM_SPACE)) * ispickup;
@@ -69,9 +62,9 @@ library ItemAbilityMod requires TimerUtils, NBonusMod {
       } else {
         // 重算英雄属性
         if (i == UNIT_ATTR_MAX_LIFE || i == UNIT_ATTR_MAX_MANA) {
-          SetUnitAttr(hero, i, value);
+          UnitAttrAdd(hero, i, value);
         } else {
-          SetUnitAttr(hero, i, base + value);
+          UnitAttrSet(hero, i, base + value);
         }
         // 将属性添加到英雄属性表中
         SaveInteger(ht, GetHandleId(hero), UNIT_ATTR + i, base + value);
@@ -97,6 +90,8 @@ library ItemAbilityMod requires TimerUtils, NBonusMod {
       DisplayTextToPlayer(GetOwningPlayer(hero), 0, 0, "|cffffcc00生命最大值或魔法最大值未达到条件，无法使用此装备。|r");
       isVerify = false;
       SaveBoolean(ht, GetHandleId(mItem), 'disa', true);
+      // CreateItem(GetItemTypeId(mItem), GetUnitX(hero), GetUnitY(hero));
+      // RemoveItem(mItem);
       UnitDropItemPoint(hero, mItem, GetUnitX(hero), GetUnitY(hero));
       mItem = null;
       hero = null;
@@ -108,6 +103,10 @@ library ItemAbilityMod requires TimerUtils, NBonusMod {
     if (!IsUnitCanPickUpItem()) {
       return;
     }
+    // 判断拾取物品是否有属性
+    if (!HaveSavedString(ht, GetItemTypeId(GetManipulatedItem()), ITEM_ATTR)) {
+      return;
+    }
     UnitAttrRecalculation(IS_ITEM_PICKUP);
   }
 
@@ -116,6 +115,11 @@ library ItemAbilityMod requires TimerUtils, NBonusMod {
     boolean isDisabled = LoadBoolean(ht, GetHandleId(mItem), 'disa');
     if (isDisabled) {
       SaveBoolean(ht, GetHandleId(mItem), 'disa', false);
+      mItem = null;
+      return;
+    }
+    // 判断拾取物品是否有属性
+    if (!HaveSavedString(ht, GetItemTypeId(mItem), ITEM_ATTR)) {
       mItem = null;
       return;
     }

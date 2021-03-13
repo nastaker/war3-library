@@ -2,12 +2,22 @@ library BonusAdd requires SystemBinary {
 
   constant integer ABIL_INV_ID = 'AInv';
   constant integer ITEM_ATK_ID = 'XzAA';
+  integer raceInvAbi[];
 
   public function UnitAtkAdd(unit u, integer amount){
     integer i = COUNT;
+    integer j;
     boolean needInv = false;
+    boolean haveRaceInv = false;
     if (amount <= 0) {
       return;
+    }
+    for (0 <= j < 4) {
+      if (GetUnitAbilityLevel(u, raceInvAbi[j]) > 0) {
+        haveRaceInv = true;
+        UnitRemoveAbility(u, raceInvAbi[j]);
+        break;
+      }
     }
     if (GetUnitAbilityLevel(u, ABIL_INV_ID) == 0) {
       UnitAddAbility(u, ABIL_INV_ID);
@@ -23,5 +33,15 @@ library BonusAdd requires SystemBinary {
     if (needInv) {
       UnitRemoveAbility(u, ABIL_INV_ID);
     }
+    if (haveRaceInv) {
+      UnitAddAbility(u, raceInvAbi[j]);
+    }
+  }
+
+  function onInit() {
+    raceInvAbi[0] = 'Aihn';
+    raceInvAbi[1] = 'Aion';
+    raceInvAbi[2] = 'Aien';
+    raceInvAbi[3] = 'Aiun';
   }
 }

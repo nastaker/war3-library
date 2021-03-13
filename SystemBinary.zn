@@ -1,6 +1,6 @@
 library SystemBinary {
   public {
-    constant integer COUNT = 15;
+    constant integer COUNT = 19;
     constant integer powersOf2[COUNT];
 
     function havebinary(integer number, integer index) -> boolean {
@@ -20,6 +20,22 @@ library SystemBinary {
       }
       return have;
     }
+
+    function Min(integer a, integer b) -> integer {
+      if (a < b) {
+        return a;
+      } else {
+        return b;
+      }
+    }
+
+    function Max(integer a, integer b) -> integer {
+      if (a > b) {
+        return a;
+      } else {
+        return b;
+      }
+    }
   }
   
   function onInit(){
@@ -38,5 +54,9 @@ library SystemBinary {
     powersOf2[12] = 4096;
     powersOf2[13] = 8192;
     powersOf2[14] = 16384;
+    powersOf2[15] = 32768;
+    powersOf2[16] = 65536;
+    powersOf2[17] = 131072;
+    powersOf2[18] = 262144;
   }
 }

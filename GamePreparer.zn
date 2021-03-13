@@ -1,6 +1,6 @@
-library GamePreparer requires TimerUtils, SystemMultiboard {
+library GamePreparer requires TimerUtils, SystemWorkpoint {
 
-  integer DiffCount = 3;
+  integer DiffCount = 4;
   integer RaceCount = 4;
 
   dialog raceDialog;
@@ -20,35 +20,42 @@ library GamePreparer requires TimerUtils, SystemMultiboard {
     diffTimerDialog = CreateTimerDialog(diffTimer);
     diffDialog = DialogCreate();
     raceDialog = DialogCreate();
-    raceButtons[0] = DialogAddButton(raceDialog, "人族[Human]", 'H');
-    raceButtons[1] = DialogAddButton(raceDialog, "兽族[Orc]", 'O');
-    raceButtons[2] = DialogAddButton(raceDialog, "不死族[Undead]", 'U');
-    raceButtons[3] = DialogAddButton(raceDialog, "暗夜精灵族[NightElf]", 'E');
+    raceButtons[0] = DialogAddButton(raceDialog, "人类[Human]", 'H');
+    raceButtons[1] = DialogAddButton(raceDialog, "兽人[Orc]", 'O');
+    raceButtons[2] = DialogAddButton(raceDialog, "亡灵[Undead]", 'U');
+    raceButtons[3] = DialogAddButton(raceDialog, "暗夜精灵[NightElf]", 'E');
     diffButtons[0] = DialogAddButton(diffDialog, "普通[Normal]", 'N');
     diffButtons[1] = DialogAddButton(diffDialog, "困难[Hard]", 'H');
     diffButtons[2] = DialogAddButton(diffDialog, "专家[Professional]", 'P');
+    diffButtons[3] = DialogAddButton(diffDialog, "简单[Easy]", 'E');
   }
 
   function InitQuests() {
-    QuestMessageBJ(udg_PlayerForce, bj_QUESTMESSAGE_DISCOVERED, "|cFFFFCC00主要任务：|r");
-    QuestMessageBJ(udg_PlayerForce, bj_QUESTMESSAGE_DISCOVERED, "总指挥部来电：请先部署防御工事，先稳住阵地后再做其他打算。\n加入贡献值系统。\n调整视角请输入：-cam[视角高度]，[视角高度]可接收值为2000-4000之间。\n请按F9查看详细说明。");
-    CreateQuestBJ(bj_QUESTTYPE_REQ_DISCOVERED, "保卫卢沟桥", "死守北平城，誓与卢沟桥共存亡！", "ReplaceableTextures\\CommandButtons\\BTNHumanCaptureFlag.blp");
-    CreateQuestBJ(bj_QUESTTYPE_REQ_DISCOVERED, "关于工分/贡献值", "工分会依据贡献值占比分配，请通过|cffffcc00出兵|r或|cffffcc00建造防御塔|r来获取贡献值！", "ReplaceableTextures\\CommandButtons\\BTNHumanCaptureFlag.blp");
+    QuestMessageBJ(udg_PlayerForce, bj_QUESTMESSAGE_DISCOVERED, "总指挥部来电：请先部署防御工事，先稳住阵地后再做其他打算。\n|cFFFFCC00请按F9查看工分系统的说明。|r");
+    CreateQuestBJ(bj_QUESTTYPE_REQ_DISCOVERED, "工分系统", "每波开始时会发放工分，工分可用于升级单位或兑换资源。|n输入-ej兑换金币，输入-em兑换木材。每点工分可兑换400指定资源。|n例：输入-ej10，使用10工分兑换4000金币，输入-em3，使用3工分兑换1200木材。", "ReplaceableTextures\\CommandButtons\\BTNHeroTinker.blp");
+    CreateQuestBJ(bj_QUESTTYPE_REQ_DISCOVERED, "购买属性", "输入-ll -mj -zl为当前选中的英雄购买属性，每点属性500金币。|n例：输入-ll50购买50点力量，输入-mj20购买20点敏捷。|n输入-dj购买等级，每级1500金币。|n例：输入-dj5购买5等级。", "ReplaceableTextures\\PassiveButtons\\PASBTNStatUp.blp");
     CreateQuestBJ(bj_QUESTTYPE_REQ_DISCOVERED, "Special Thanks", "SpiritArrow by epsilon|nCosmic Elven Wings by Mythic", "ReplaceableTextures\\CommandButtons\\BTNWispSplode.blp");
-    CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "调整视角", "输入-cam[视角高度]来调整视角，如：“-cam2500”调整视角高度为2500。视角高度范围2000-4000", "ReplaceableTextures\\CommandButtons\\BTNControlMagic.blp");
+    CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "调整视角", "1、输入++、--微调视角高度|n2、输入-cam[视角高度]来设置视角高度，如：“-cam2500”调整视角高度为2500。视角高度范围2000-4000", "ReplaceableTextures\\CommandButtons\\BTNControlMagic.blp");
     CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "剿匪", "附近山林中有土匪把守，剿灭他们可以获得更多资源。", "ReplaceableTextures\\CommandButtons\\BTNBanditSpearThrower.blp");
-    CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "关于", "作者：Seviethgin|n优化：Nastaker|n邮箱：nastaker@163.com|n如需获取本图未加密版本，请发送主题为“卢沟桥未加密”的邮件至上述邮箱。|n如需获取本图原版，请发送主题为“卢沟桥原版”的邮件至上述邮箱。", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
+    CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "关于", "作者：Seviethgin|n优化：Nastaker|n邮箱：nastaker@163.com", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
   }
 
   function JudgeDifficulty() {
+    trigger trg = CreateTrigger();
     integer i;
+    unit u;
     for (1 <= i < DiffCount) {
       if (diffSelectedCount[0] < diffSelectedCount[i]) {
         diffSelectedCount[0] = diffSelectedCount[i];
         udg_CurrDiff = i;
       }
     }
-    DisplayTimedTextToForce(udg_PlayerForce, 90.00, ("已选择难度：" + udg_DiffStr[udg_CurrDiff]));
+    u = CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), 'n01A', 300, -3800, 135);
+    TriggerRegisterUnitEvent(trg, u, EVENT_UNIT_SELL);
+    TriggerAddAction(trg, function SellUnit);
+    DisplayTimedTextToForce(udg_PlayerForce, 90.00, "已选择难度：" + udg_DiffStr[udg_CurrDiff]);
+    u = null;
+    trg = null;
   }
 
   // 种族选择对话框被点击
@@ -70,7 +77,7 @@ library GamePreparer requires TimerUtils, SystemMultiboard {
     DialogDisplay(GetEnumPlayer(), diffDialog, false);
     // 判断此玩家是否选择了种族
     if (!isPlayerSelected[GetPlayerId(GetEnumPlayer())]) {
-      DialogSetMessage(raceDialog, "选择种族");
+      DialogSetMessage(raceDialog, "请选择种族");
       DialogDisplay(GetEnumPlayer(), raceDialog, true);
     }
   }
@@ -79,12 +86,17 @@ library GamePreparer requires TimerUtils, SystemMultiboard {
   function DiffDialogEvent() {
     integer i;
     diffSelectedNumer = diffSelectedNumer + 1;
-    DialogSetMessage(raceDialog, "选择种族");
+    DialogSetMessage(raceDialog, "请选择种族");
     DialogDisplay(GetTriggerPlayer(), raceDialog, true);
     isPlayerSelected[GetPlayerId(GetTriggerPlayer())] = true;
     for (0 <= i < DiffCount) {
       if (GetClickedButton() == diffButtons[i]) {
-        diffSelectedCount[i] = diffSelectedCount[i] + 1;
+        if (i == DiffCount-1) {
+          // 简单难度
+          diffSelectedCount[0] = diffSelectedCount[0] + 1;
+        } else {
+          diffSelectedCount[i+1] = diffSelectedCount[i+1] + 1;
+        }
       }
     }
     if (IsDiffSelected || diffSelectedNumer < CountPlayersInForceBJ(udg_PlayerForce)) {
@@ -131,6 +143,8 @@ library GamePreparer requires TimerUtils, SystemMultiboard {
   }
 
   function init() {
+    // 设置视角高度
+    SetCameraField(CAMERA_FIELD_TARGET_DISTANCE, 2500.0, 1);
     // 打开电影模式
     CinematicModeBJ(true, GetPlayersAll());
     // 淡入

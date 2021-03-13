@@ -1,13 +1,9 @@
-library SystemMultiboard requires optional PlatformHelper {
-  timer timerEnemyCount = CreateTimer();
+library SystemMultiboard requires GlobalVar, optional PlatformHelper {
+  timer timerEnemyCount = null;
   group gEnemy = CreateGroup();
   integer enemyCountRowIndex = 0;
   integer rowCountAddtion = 6;
   boolean multiboardInited = false;
-  string qqgroup = "QQ群：|cffffcc0039055594|r";
-  string author = "作者：|cffffcc00Nastaker|r";
-  string date = "更新日期：|cffffcc002020/03/14|r";
-  string ver = "版本：|cffffcc001.211|r";
 
   multiboard Multiboard;
   string HeaderTitle[];
@@ -15,14 +11,14 @@ library SystemMultiboard requires optional PlatformHelper {
   function MultiboardUpdatePlayerScore(integer playerIndex) {
     // 设置玩家杀敌数
     MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 1], YDWEGetPlayerColorString(Player(playerIndex), I2S(udg_Kills[playerIndex])));
-    // 设置玩家贡献分
-    MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 2], YDWEGetPlayerColorString(Player(playerIndex), I2S(udg_PlayerDedication[playerIndex])));
     // 设置玩家工分
-    MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 3], YDWEGetPlayerColorString(Player(playerIndex), I2S(udg_PlayerWorkPoint[playerIndex])));
-    // 从这列开始，平台上游玩才会有
-    if (udg_IsOnPlat11) {
+    MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 2], YDWEGetPlayerColorString(Player(playerIndex), I2S(udg_PlayerWorkPoint[playerIndex])));
+    // 设置玩家单位升级
+    MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 3], YDWEGetPlayerColorString(Player(playerIndex), I2S(UnitUpgraded[playerIndex][0])+"攻"+I2S(UnitUpgraded[playerIndex][1])+"防"+I2S(UnitUpgraded[playerIndex][2])+"速"+I2S(UnitUpgraded[playerIndex][3])+"血"));
+    // 从这列开始，平台上游玩且难度大于【娱乐】才会有
+    if (udg_IsOnPlat11 && udg_CurrDiff > 0) {
       // 设置玩家积分
-      MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 4], YDWEGetPlayerColorString(Player(playerIndex), I2S(PlayerScore[playerIndex]-PlayerScoreUsed[playerIndex])+"/"+I2S(PlayerScore[playerIndex])));
+      MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 4], YDWEGetPlayerColorString(Player(playerIndex), I2S(PlayerScore[playerIndex])));
       // 设置玩家本局积分
       MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 5], YDWEGetPlayerColorString(Player(playerIndex), I2S(addedScore[playerIndex])));
       // 设置玩家称号
@@ -57,6 +53,34 @@ library SystemMultiboard requires optional PlatformHelper {
     }
   }
   
+  function ConditionGroupEnemy() -> boolean {
+    if ((IsUnitType(GetFilterUnit(), UNIT_TYPE_MELEE_ATTACKER) ||
+    IsUnitType(GetFilterUnit(), UNIT_TYPE_RANGED_ATTACKER)) &&
+    !IsUnitType(GetFilterUnit(), UNIT_TYPE_STRUCTURE) &&
+    !IsUnitType(GetFilterUnit(), UNIT_TYPE_SUMMONED) &&
+    GetUnitState(GetFilterUnit(), UNIT_STATE_LIFE) > 0.45 &&
+    IsUnitAlly(GetFilterUnit(), Player(8)) &&
+    GetOwningPlayer(GetFilterUnit()) != Player(PLAYER_NEUTRAL_PASSIVE)) {
+      udg_CurrEnemyCount = udg_CurrEnemyCount + 1;
+      return true;
+    }
+    return false;
+  }
+
+  public function UpdateMultiboardEnemyCount() {
+    if (udg_CurrDiff > 0) {
+      MultiboardSetItemValue(MultiboardItem[enemyCountRowIndex * ColCount + 1], I2S(udg_CurrEnemyCount));
+    }
+  }
+
+  function CalcEnemyCount(){
+    // 设置敌人总数
+    udg_CurrEnemyCount = 0;
+    GroupClear(gEnemy);
+    GroupEnumUnitsInRange(gEnemy, 0.0, 0.0, 10000, Condition(function ConditionGroupEnemy));
+    UpdateMultiboardEnemyCount();
+  }
+  
   function InitMultiboardMain() {
     integer col, row, PlayerCount;
     real ColWidth[], totalWidth;
@@ -69,23 +93,24 @@ library SystemMultiboard requires optional PlatformHelper {
       ColWidth[0] = 0.08;
       ColWidth[1] = 0.04;
       ColWidth[2] = 0.04;
-      ColWidth[3] = 0.04;
+      ColWidth[3] = 0.10;
       ColWidth[4] = 0.04;
       ColWidth[5] = 0.04;
       ColWidth[6] = 0.04;
-      totalWidth = 0.33;
-      rowCountAddtion = rowCountAddtion - 1;
+      totalWidth = 0.38;
       InitPlayerPlatScore();
     } else {
       ColCount = 4;
-      ColWidth[0] = 0.08;
+      ColWidth[0] = 0.12;
       ColWidth[1] = 0.04;
       ColWidth[2] = 0.04;
-      ColWidth[3] = 0.04;
-      totalWidth = 0.21;
+      ColWidth[3] = 0.10;
+      totalWidth = 0.30;
     }
-
-    MultiboardSetTitleText(Multiboard, "抗日英雄榜 难度：" + udg_DiffStr[udg_CurrDiff]);
+    if (udg_CurrDiff == 0) {
+      rowCountAddtion = rowCountAddtion - 2;
+    }
+    MultiboardSetTitleText(Multiboard, "英雄榜 难度：" + udg_DiffStr[udg_CurrDiff]);
     MultiboardSetRowCount(Multiboard, PlayerCount + rowCountAddtion);
     MultiboardSetItemsStyle(Multiboard, true, false);
     MultiboardSetColumnCount(Multiboard, ColCount);
@@ -123,72 +148,39 @@ library SystemMultiboard requires optional PlatformHelper {
     MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
     MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], totalWidth);
     MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "|cccdedede────────────────────────────────────────────|r");
-    row = row + 1;
-    enemyCountRowIndex = row;
-    // 显示敌人总数
-    MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
-    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.08);
-    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "敌人总数量：");
-    MultiboardItem[(row * ColCount) + 1] = MultiboardGetItem(Multiboard, row, 1);
-    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 1], 0.02);
-    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 1], "0");
-    MultiboardItem[(row * ColCount) + 2] = MultiboardGetItem(Multiboard, row, 2);
-    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 2], 0.08);
-    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 2], "下波超过即失败：");
-    MultiboardItem[(row * ColCount) + 3] = MultiboardGetItem(Multiboard, row, 3);
-    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 3], 0.02);
-    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 3], "0");
-    row = row + 1;
-    // 设置表底格栅
-    MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
-    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], totalWidth);
-    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "|cccdedede────────────────────────────────────────────|r");
+    if (udg_CurrDiff > 0) {
+      row = row + 1;
+      enemyCountRowIndex = row;
+      timerEnemyCount = CreateTimer();
+      TimerStart(timerEnemyCount, 120.0, true, function CalcEnemyCount);
+      // 显示敌人总数
+      MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
+      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.16);
+      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "敌人数量(超过300失败)：");
+      MultiboardItem[(row * ColCount) + 1] = MultiboardGetItem(Multiboard, row, 1);
+      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 1], 0.08);
+      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 1], "0");
+      row = row + 1;
+      // 设置表底格栅
+      MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
+      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], totalWidth);
+      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "|cccdedede────────────────────────────────────────────|r");
+    }
     row = row + 1;
     // 设置表底
     MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
-    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.10);
-    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], qqgroup);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.14);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "QQ群：|cffffcc00"+qqgroup);
     MultiboardItem[(row * ColCount) + 1] = MultiboardGetItem(Multiboard, row, 1);
-    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 1], 0.10);
-    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 1], author);
-    if (udg_IsOnPlat11) {
-      MultiboardItem[(row * ColCount) + 2] = MultiboardGetItem(Multiboard, row, 2);
-      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 2], 0.12);
-      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 2], ver);
-    } else {
-      row = row + 1;
-      MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
-      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.10);
-      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], date);
-      MultiboardItem[(row * ColCount) + 1] = MultiboardGetItem(Multiboard, row, 1);
-      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 1], 0.10);
-      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 1], ver);
-    }
-  }
-
-  function ConditionGroupEnemy() -> boolean {
-    if ((IsUnitType(GetFilterUnit(), UNIT_TYPE_MELEE_ATTACKER) ||
-    IsUnitType(GetFilterUnit(), UNIT_TYPE_RANGED_ATTACKER)) &&
-    !IsUnitType(GetFilterUnit(), UNIT_TYPE_STRUCTURE) &&
-    !IsUnitType(GetFilterUnit(), UNIT_TYPE_SUMMONED) &&
-    GetUnitState(GetFilterUnit(), UNIT_STATE_LIFE) > 0.45 &&
-    IsUnitAlly(GetFilterUnit(), Player(8)) &&
-    GetOwningPlayer(GetFilterUnit()) != Player(PLAYER_NEUTRAL_PASSIVE)) {
-      udg_CurrEnemyCount = udg_CurrEnemyCount + 1;
-      return true;
-    }
-    return false;
-  }
-
-  function UpdateMultiboardEnemyCount() {
-    if (enemyCountRowIndex > 0) {
-      // 设置敌人总数
-      udg_CurrEnemyCount = 0;
-      GroupClear(gEnemy);
-      GroupEnumUnitsInRange(gEnemy, 0.0, 0.0, 10000, Condition(function ConditionGroupEnemy));
-      MultiboardSetItemValue(MultiboardItem[enemyCountRowIndex * ColCount + 1], "|cFFFF3333"+I2S(udg_CurrEnemyCount));
-      MultiboardSetItemValue(MultiboardItem[enemyCountRowIndex * ColCount + 3], "|cFFFF3333"+I2S(250+10*udg_RoundIndex));
-    }
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 1], 0.14);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 1], "作者：|cffffcc00"+author);
+    row = row + 1;
+    MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.14);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "更新日期：|cffffcc00"+date);
+    MultiboardItem[(row * ColCount) + 1] = MultiboardGetItem(Multiboard, row, 1);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 1], 0.14);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 1], "版本：|cffffcc00"+ver);
   }
 
   public function PrepareMultiboard() {
@@ -203,8 +195,8 @@ library SystemMultiboard requires optional PlatformHelper {
     Multiboard = CreateMultiboard();
     HeaderTitle[0] = "|cffffcc00玩家|r";
     HeaderTitle[1] = "|cffffcc00杀敌|r";
-    HeaderTitle[2] = "|cffffcc00贡献值|r";
-    HeaderTitle[3] = "|cffffcc00工分|r";
+    HeaderTitle[2] = "|cffffcc00工分|r";
+    HeaderTitle[3] = "|cffffcc00单位升级|r";
     HeaderTitle[4] = "|cffffcc00积分|r";
     HeaderTitle[5] = "|cffffcc00本局积分|r";
     HeaderTitle[6] = "|cffffcc00称号|r";
@@ -212,6 +204,5 @@ library SystemMultiboard requires optional PlatformHelper {
 
   function onInit() {
     initVars();
-    TimerStart(timerEnemyCount, 10.0, true, function UpdateMultiboardEnemyCount);
   }
 }

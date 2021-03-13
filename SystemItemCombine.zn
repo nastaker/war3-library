@@ -1,16 +1,11 @@
 
 library SystemItemCombine requires TimerUtils {
   private {
-    dialog craftDialog = DialogCreate();
-    button dialogButtons[];
-    unit craftUnit[];
     integer charges;
     // 合成出的目标物品
     item distItem = null;
     // 目标物品名称
     string distItemName = null;
-    integer itemMatId = 'I005';
-    integer hashParentKeyPrefix = 'craf';
     //
     integer MAT_COUNT_INDEX = 10000;
     
@@ -25,245 +20,6 @@ library SystemItemCombine requires TimerUtils {
   }
 
   function InitHashtableCombine() {
-    // 基础合成 30
-    integer slotIndex = 0;
-    SaveInteger( ht, hashParentKeyPrefix + 30, slotIndex, 'gcel' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 30, slotIndex, 'cnob' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 30, slotIndex, 'rat6' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 30, slotIndex, 'rag1' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 30, slotIndex, 'rst1' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 30, slotIndex, 'rin1' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 30, slotIndex, 'bspd' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 30, slotIndex, 'rde1' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 30, slotIndex, 'rde2' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 30, slotIndex, 'rlif' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 30, slotIndex, 'rwiz' );
-    SaveInteger( ht, hashParentKeyPrefix, 30, slotIndex );
-    // 基础合成 50
-    slotIndex = 0;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'bgst' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'ciri' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'belv' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'hcun' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'hval' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'mcou' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'rat6' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'rat9' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'ratc' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'rde3' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'afac' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'lhst' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'ajen' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'lgdh' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'kpin' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'sbch' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'ward' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'odef' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'evtl' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'brac' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'rhth' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'pmna' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'ratf' );
-    slotIndex += 1;
-    SaveInteger( ht, hashParentKeyPrefix + 50, slotIndex, 'gobm' );
-    SaveInteger( ht, hashParentKeyPrefix, 50, slotIndex );
-
-    SaveInteger(ht, 'I008', 0, 'I009');
-    SaveInteger(ht, 'I009', 0, 'I00A');
-    SaveInteger(ht, 'I00A', 0, 'I00B');
-    SaveInteger(ht, 'I00B', 0, 'modt');
-    SaveInteger(ht, 'ratf', 0, 'IC14');
-    SaveInteger(ht, 'gcel', 0, 'IC14');
-    SaveInteger(ht, 'IC13', 0, 'IC14');
-    SaveInteger(ht, 'ckng', 0, 'IC18');
-    SaveInteger(ht, 'cnob', 0, 'ckng');
-    SaveInteger(ht, 'rst1', 0, 'ckng');
-    SaveInteger(ht, 'rin1', 0, 'ckng');
-    SaveInteger(ht, 'rag1', 0, 'ckng');
-    SaveInteger(ht, 'belv', 0, 'ckng');
-    SaveInteger(ht, 'bgst', 0, 'ckng');
-    SaveInteger(ht, 'ciri', 0, 'ckng');
-    SaveInteger(ht, 'rde1', 0, 'IC29');
-    SaveInteger(ht, 'rde2', 0, 'IC29');
-    SaveInteger(ht, 'rde3', 0, 'IC29');
-    SaveInteger(ht, 'rwiz', 0, 'kgal');
-    SaveInteger(ht, 'rlif', 0, 'kgal');
-    SaveInteger(ht, 'kgal', 0, 'I00G');
-    SaveInteger(ht, 'I00G', 0, 'I00H');
-    SaveInteger(ht, 'I00H', 0, 'I00I');
-    SaveInteger(ht, 'I00I', 0, 'I00J');
-    SaveInteger(ht, 'rhth', 0, 'I00K');
-    SaveInteger(ht, 'pmna', 0, 'I00K');
-    SaveInteger(ht, 'penr', 0, 'I00K');
-    SaveInteger(ht, 'prvt', 0, 'I00K');
-    SaveInteger(ht, 'I00K', 0, 'I00L');
-    SaveInteger(ht, 'I00L', 0, 'I00M');
-    SaveInteger(ht, 'I00M', 0, 'I00N');
-    SaveInteger(ht, 'rat6', 0, 'rat3');
-    SaveInteger(ht, 'rat9', 0, 'rat3');
-    SaveInteger(ht, 'ratc', 0, 'rat3');
-    SaveInteger(ht, 'crys', 0, 'rat3');
-    SaveInteger(ht, 'crys', 1, 'hbth');
-    SaveInteger(ht, 'hcun', 0, 'hbth');
-    SaveInteger(ht, 'hval', 0, 'hbth');
-    SaveInteger(ht, 'mcou', 0, 'hbth');
-    SaveInteger(ht, 'I009', 6, 'I008');
-    SaveInteger(ht, 'I009', 7, itemMatId);
-    SaveInteger(ht, 'I009', 10006, 2);
-    SaveInteger(ht, 'I009', 10007, 60);
-    SaveInteger(ht, 'I00A', 6, 'I009');
-    SaveInteger(ht, 'I00A', 7, itemMatId);
-    SaveInteger(ht, 'I00A', 10006, 2);
-    SaveInteger(ht, 'I00A', 10007, 93);
-    SaveInteger(ht, 'I00B', 6, 'I00A');
-    SaveInteger(ht, 'I00B', 7, itemMatId);
-    SaveInteger(ht, 'I00B', 10006, 2);
-    SaveInteger(ht, 'I00B', 10007, 63);
-    SaveInteger(ht, 'modt', 6, 'I00B');
-    SaveInteger(ht, 'modt', 7, itemMatId);
-    SaveInteger(ht, 'modt', 10006, 2);
-    SaveInteger(ht, 'modt', 10007, 41);
-    SaveInteger(ht, 'IC14', 6, 'ratf');
-    SaveInteger(ht, 'IC14', 7, 'gcel');
-    SaveInteger(ht, 'IC14', 8, 'IC13');
-    SaveInteger(ht, 'IC14', 9, itemMatId);
-    SaveInteger(ht, 'IC14', 10006, 1);
-    SaveInteger(ht, 'IC14', 10007, 1);
-    SaveInteger(ht, 'IC14', 10008, 1);
-    SaveInteger(ht, 'IC14', 10009, 86);
-    SaveInteger(ht, 'ckng', 6, 'cnob');
-    SaveInteger(ht, 'ckng', 7, itemMatId);
-    SaveInteger(ht, 'ckng', 12, 'rst1');
-    SaveInteger(ht, 'ckng', 13, 'rin1');
-    SaveInteger(ht, 'ckng', 14, 'rag1');
-    SaveInteger(ht, 'ckng', 15, itemMatId);
-    SaveInteger(ht, 'ckng', 18, 'belv');
-    SaveInteger(ht, 'ckng', 19, 'bgst');
-    SaveInteger(ht, 'ckng', 20, 'ciri');
-    SaveInteger(ht, 'ckng', 21, itemMatId);
-    SaveInteger(ht, 'ckng', 10006, 3);
-    SaveInteger(ht, 'ckng', 10007, 53);
-    SaveInteger(ht, 'ckng', 10012, 1);
-    SaveInteger(ht, 'ckng', 10013, 1);
-    SaveInteger(ht, 'ckng', 10014, 1);
-    SaveInteger(ht, 'ckng', 10015, 38);
-    SaveInteger(ht, 'ckng', 10018, 1);
-    SaveInteger(ht, 'ckng', 10019, 1);
-    SaveInteger(ht, 'ckng', 10020, 1);
-    SaveInteger(ht, 'ckng', 10021, 94);
-    SaveInteger(ht, 'IC18', 6, 'ckng');
-    SaveInteger(ht, 'IC18', 7, itemMatId);
-    SaveInteger(ht, 'IC18', 10006, 2);
-    SaveInteger(ht, 'IC18', 10007, 98);
-    SaveInteger(ht, 'IC29', 6, 'rde1');
-    SaveInteger(ht, 'IC29', 7, 'rde2');
-    SaveInteger(ht, 'IC29', 8, 'rde3');
-    SaveInteger(ht, 'IC29', 9, itemMatId);
-    SaveInteger(ht, 'IC29', 10006, 1);
-    SaveInteger(ht, 'IC29', 10007, 1);
-    SaveInteger(ht, 'IC29', 10008, 1);
-    SaveInteger(ht, 'IC29', 10009, 47);
-    SaveInteger(ht, 'kgal', 6, 'rwiz');
-    SaveInteger(ht, 'kgal', 7, 'rlif');
-    SaveInteger(ht, 'kgal', 8, itemMatId);
-    SaveInteger(ht, 'kgal', 10006, 1);
-    SaveInteger(ht, 'kgal', 10007, 1);
-    SaveInteger(ht, 'kgal', 10008, 73);
-    SaveInteger(ht, 'I00G', 6, 'kgal');
-    SaveInteger(ht, 'I00G', 7, itemMatId);
-    SaveInteger(ht, 'I00G', 10006, 2);
-    SaveInteger(ht, 'I00G', 10007, 77);
-    SaveInteger(ht, 'I00H', 6, 'I00G');
-    SaveInteger(ht, 'I00H', 7, itemMatId);
-    SaveInteger(ht, 'I00H', 10006, 2);
-    SaveInteger(ht, 'I00H', 10007, 40);
-    SaveInteger(ht, 'I00I', 6, 'I00H');
-    SaveInteger(ht, 'I00I', 7, itemMatId);
-    SaveInteger(ht, 'I00I', 10006, 2);
-    SaveInteger(ht, 'I00I', 10007, 55);
-    SaveInteger(ht, 'I00J', 6, 'I00I');
-    SaveInteger(ht, 'I00J', 7, itemMatId);
-    SaveInteger(ht, 'I00J', 10006, 2);
-    SaveInteger(ht, 'I00J', 10007, 46);
-    SaveInteger(ht, 'I00K', 6, 'rhth');
-    SaveInteger(ht, 'I00K', 7, 'pmna');
-    SaveInteger(ht, 'I00K', 8, 'penr');
-    SaveInteger(ht, 'I00K', 9, 'prvt');
-    SaveInteger(ht, 'I00K', 10, itemMatId);
-    SaveInteger(ht, 'I00K', 10006, 1);
-    SaveInteger(ht, 'I00K', 10007, 1);
-    SaveInteger(ht, 'I00K', 10008, 1);
-    SaveInteger(ht, 'I00K', 10009, 1);
-    SaveInteger(ht, 'I00K', 10010, 75);
-    SaveInteger(ht, 'I00L', 6, 'I00K');
-    SaveInteger(ht, 'I00L', 7, itemMatId);
-    SaveInteger(ht, 'I00L', 10006, 2);
-    SaveInteger(ht, 'I00L', 10007, 37);
-    SaveInteger(ht, 'I00M', 6, 'I00L');
-    SaveInteger(ht, 'I00M', 7, itemMatId);
-    SaveInteger(ht, 'I00M', 10006, 2);
-    SaveInteger(ht, 'I00M', 10007, 80);
-    SaveInteger(ht, 'I00N', 6, 'I00M');
-    SaveInteger(ht, 'I00N', 7, itemMatId);
-    SaveInteger(ht, 'I00N', 10006, 2);
-    SaveInteger(ht, 'I00N', 10007, 96);
-    SaveInteger(ht, 'rat3', 6, 'rat6');
-    SaveInteger(ht, 'rat3', 7, 'rat9');
-    SaveInteger(ht, 'rat3', 8, 'ratc');
-    SaveInteger(ht, 'rat3', 9, 'crys');
-    SaveInteger(ht, 'rat3', 10, itemMatId);
-    SaveInteger(ht, 'rat3', 10006, 1);
-    SaveInteger(ht, 'rat3', 10007, 1);
-    SaveInteger(ht, 'rat3', 10008, 1);
-    SaveInteger(ht, 'rat3', 10009, 1);
-    SaveInteger(ht, 'rat3', 10010, 94);
-    SaveInteger(ht, 'hbth', 6, 'hcun');
-    SaveInteger(ht, 'hbth', 7, 'hval');
-    SaveInteger(ht, 'hbth', 8, 'mcou');
-    SaveInteger(ht, 'hbth', 9, 'crys');
-    SaveInteger(ht, 'hbth', 10, itemMatId);
-    SaveInteger(ht, 'hbth', 10006, 1);
-    SaveInteger(ht, 'hbth', 10007, 1);
-    SaveInteger(ht, 'hbth', 10008, 1);
-    SaveInteger(ht, 'hbth', 10009, 1);
-    SaveInteger(ht, 'hbth', 10010, 48);
-
-
-    dialogButtons[0] = DialogAddButton(craftDialog, "使用30材料[B]", 'B');
-    dialogButtons[1] = DialogAddButton(craftDialog, "使用50材料[A]", 'A');
-    dialogButtons[2] = DialogAddButton(craftDialog, "打造高级物品[S]", 'S');
   }
 
   function InitHashtableMain() {
@@ -281,7 +37,7 @@ library SystemItemCombine requires TimerUtils {
     return itemName;
   }
 
-  function InnerItemCombine(unit u, integer itemId, integer itemIndex) -> boolean {
+  function InnerItemCombine(unit u, integer itemId) -> boolean {
     integer slotIndex;
     integer matSlotIndex;
     integer materialIndex;
@@ -326,7 +82,7 @@ library SystemItemCombine requires TimerUtils {
           // 需要多少个
           materialRemoveCount = LoadInteger(ht, distItemId, MAT_COUNT_INDEX + (materialCombineCount * distItemCount) + materialIndex);
           // 循环单位物品栏
-          for (itemIndex <= slotIndex < slotCount) {
+          for (0 <= slotIndex < slotCount) {
             // 是否有素材物品
             if (materialRemove == GetItemTypeId(UnitItemInSlot(u, slotIndex))) {
               // 素材物品数量是否足够
@@ -381,86 +137,46 @@ library SystemItemCombine requires TimerUtils {
     return canCombine;
   }
 
-  // 尝试直接合成物品
-  function ItemCombineDirect(unit u, integer itemId) {
-    // 传入单位，物品，物品索引
-    InnerItemCombine(u, itemId, 0);
-    //清空
-    u = null;
-  }
-
-  function CraftRandomItem(unit u, integer count) {
-    // 判断单位身上是否有材料
-    item tempItem = null;
-    item craftItem = null;
-    integer slotIndex = 0;
-    for (0 <= slotIndex < slotCount) {
-      tempItem = UnitItemInSlot(u, slotIndex);
-      if (GetItemTypeId(tempItem) == itemMatId) {
-        // 判断数量
-        charges = GetItemCharges(tempItem);
-        if (charges >= count) {
-          craftItem = CreateItem(LoadInteger(ht, hashParentKeyPrefix + count, GetRandomInt(0, LoadInteger(ht, hashParentKeyPrefix, count) - 1)), GetUnitX(u), GetUnitY(u));
-          UnitAddItem(u, craftItem);
-          DisplayTextToPlayer(GetOwningPlayer(u), 0, 0, "打造成功，获得物品：|cffffcc00" + GetItemName(craftItem) + "|r。");
-          if (charges == count) {
-            RemoveItem(tempItem);
-          } else {
-            SetItemCharges(tempItem, charges - count);
-          }
-        }
-        break;
-      }
-    }
-    tempItem = null;
-    craftItem = null;
-  }
-
   // 尝试打造合成物品
-  function ItemCraft() {
+  function ItemCraft() -> boolean {
     // 获取单位
-    unit u = craftUnit[GetPlayerId(GetTriggerPlayer())];
+    unit u = GetTriggerUnit();
     // 第一层循环，获取单位身上物品
     integer slotIndex;
     integer itemId = 0;
-
-    // 获取按钮
-    if (GetClickedButton()==dialogButtons[0]) {
-      // 30 材料
-      CraftRandomItem(u, 30);
-    } else if (GetClickedButton()==dialogButtons[1]) {
-      // 50 材料
-      CraftRandomItem(u, 50);
-    } else if (GetClickedButton()==dialogButtons[2]) {
-      // 高级物品
-      for(0 <= slotIndex < slotCount) {
-        itemId = GetItemTypeId(UnitItemInSlot(u, slotIndex));
-        if (itemId == 0) {
-          // 第一格没有物品，跳过此次循环
-        } else {
-          // 传入单位，物品，物品索引
-          if(InnerItemCombine(u, itemId, slotIndex)) {
-            break;
-          }
+    for(0 <= slotIndex < slotCount) {
+      itemId = GetItemTypeId(UnitItemInSlot(u, slotIndex));
+      if (itemId == 0) {
+        // 没有物品，跳过此次循环
+      } else {
+        // 传入单位，物品，物品索引
+        if(InnerItemCombine(u, itemId)) {
+          break;
         }
       }
     }
     //清空
     u = null;
+    return false;
+  }
+
+  function IsUnitHero() -> boolean {
   }
 
   function onInit() {
     // 初始化变量
+    integer i = 0;
     timer inithashtableTimer = NewTimer();
-    timer initunitsellTimer = NewTimer();
     trigger trg = CreateTrigger();
     // 初始化合成表
     TimerStart(inithashtableTimer, 1.00, false, function InitHashtableMain);
     inithashtableTimer = null;
     //
     trg = CreateTrigger();
-    TriggerRegisterDialogEvent(trg, craftDialog);
-    TriggerAddAction(trg, function ItemCraft);
+    for (0 <= i < 12) {
+      TriggerRegisterPlayerUnitEvent(trg, Player(i), EVENT_PLAYER_UNIT_PICKUP_ITEM, null);
+    }
+    TriggerAddCondition(trg, Condition(function ItemCraft));
     trg = null;
   }
 }

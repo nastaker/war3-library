@@ -1,29 +1,19 @@
-library PlatformHelper requires SystemBinary, YDWERPGScores {
+library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
+
+  dialog dlgTitle;
+  button btnTitle[];
+
   public {
+    boolean isPlayerChangedTitle[];
+    integer PlayerWinStreak[];
+    integer PlayerWinCount[];
+    integer PlayerGameCount[];
+    integer PlayerScoreBefore[];
     integer PlayerScore[];
-    integer PlayerScoreUsed[];
     integer PlayerTitles[];
     integer PlayerTitleCurr[];
-    string PlayerTitleStr[];
 
     integer addedScore[];
-
-    integer WINGIDS[];
-
-    function InitWingIds() {
-      WINGIDS[0] = 'A00M';
-      WINGIDS[1] = 'A00N';
-      WINGIDS[2] = 'A00O';
-      WINGIDS[3] = 'A00P';
-      WINGIDS[4] = 'A00Q';
-    }
-
-    function InitPlayerTitleStr() {
-      PlayerTitleStr[0] = "无";
-      PlayerTitleStr[1] = "|cffffcc00元老玩家|r";
-      PlayerTitleStr[2] = "|cffff3333千人斩|r";
-      PlayerTitleStr[3] = "|cffffcc00天下无双|r";
-    }
 
     function IsUnitHaveWing(unit u) -> boolean {
       integer playerId = GetPlayerId(GetOwningPlayer(u));
@@ -33,6 +23,60 @@ library PlatformHelper requires SystemBinary, YDWERPGScores {
       }
       u = null;
       return have;
+    }
+
+    function SetPlayerTitle(player p, integer titleIndex) {
+      integer playerId = GetPlayerId(p);
+      if (titleIndex <= 0) {
+        return;
+      }
+      PlayerTitleCurr[playerId] = titleIndex;
+      YDWERPGSetKey(p, "ch", titleIndex);
+      if (!havebinary(PlayerTitles[playerId], titleIndex-1)) {
+        PlayerTitles[playerId] = PlayerTitles[playerId] + R2I(Pow(2, titleIndex-1));
+        YDWERPGAddKey(p, "c+1023", R2I(Pow(2, titleIndex-1)));
+      }
+    }
+
+    function DialogTitleClick() {
+      integer i;
+      for (0 <= i < 6) {
+        if (GetClickedButton() == btnTitle[i]) {
+          SetPlayerTitle(GetTriggerPlayer(), i);
+          isPlayerChangedTitle[GetPlayerId(GetTriggerPlayer())] = true;
+          DisplayTextToPlayer(GetTriggerPlayer(), 0, 0, "已更换称号为："+PlayerTitleStr[i+1]+"。");
+          break;
+        }
+      }
+    }
+
+    function InitDialogs() {
+      trigger trigDialog = CreateTrigger();
+      dlgTitle = DialogCreate();
+      // 难度选择对话框被点击事件;
+      TriggerRegisterDialogEvent(trigDialog, dlgTitle);
+      TriggerAddAction(trigDialog, function DialogTitleClick);
+      trigDialog = null;
+    }
+
+    function ShowTitleChangeDialog(player p) {
+      integer i;
+      integer playerId = GetPlayerId(p);
+      if (isPlayerChangedTitle[playerId]) {
+        DisplayTextToPlayer(p, 0, 0, "你本局已更换过称号，无法再更换。");
+        return;
+      }
+      DialogClear(dlgTitle);
+      DialogSetMessage(dlgTitle, "请选择称号");
+      for (0 <= i <= 6) {
+        if (havebinary(PlayerTitles[playerId], i) && i < 6) {
+          btnTitle[i] = DialogAddButton(dlgTitle, PlayerTitleStr[i+1], 0);
+        } else if (i==6) {
+          btnTitle[i] = DialogAddButton(dlgTitle, "取消", 0);
+        }
+      }
+      DialogDisplay(p, dlgTitle, true);
+      p = null;
     }
 
     function UnitAddWing(unit u) {
@@ -61,53 +105,58 @@ library PlatformHelper requires SystemBinary, YDWERPGScores {
 
     function InitPlayerPlatScore() {
       integer i = 0;
+      integer gold = 0;
+      integer lumber = 0;
+      string ver;
       for (0 <= i < 8) {
         if (GetPlayerController(Player(i))==MAP_CONTROL_USER && GetPlayerSlotState(Player(i)) == PLAYER_SLOT_STATE_PLAYING) {
           PlayerTitles[i] = YDWERPGGetKey(Player(i), "c+1023");
           PlayerTitleCurr[i] = YDWERPGGetKey(Player(i), "ch");
-          PlayerScore[i] = YDWERPGGetKey(Player(i), "a+233");
-          PlayerScoreUsed[i] = YDWERPGGetKey(Player(i), "a0+10000");
-
-          if (PlayerTitleCurr[i] == 1 && !havebinary(PlayerTitles[i], 0)) {
-            YDWERPGAddKey(Player(i), "c+1023", 1);
+          PlayerScoreBefore[i] = YDWERPGGetKey(Player(i), "a+233");
+          PlayerScore[i] = YDWERPGGetKey(Player(i), "jf");
+          PlayerWinStreak[i] = YDWERPGGetKey(Player(i), "ws"+I2S(udg_CurrDiff));
+          PlayerWinCount[i] = YDWERPGGetKey(Player(i), "wc"+I2S(udg_CurrDiff));
+          // 默认设置连胜数清零，结束后若胜利则+1
+          YDWERPGSetKey(Player(i), "ws"+I2S(udg_CurrDiff), 0);
+          // 若jf小于a+233，迁移数据
+          if (PlayerScore[i] < PlayerScoreBefore[i]) {
+            PlayerScore[i] = PlayerScoreBefore[i];
+            YDWERPGSetKey(Player(i), "jf", PlayerScore[i]);
           }
+          gold = GetPlayerState(Player(i), PLAYER_STATE_RESOURCE_GOLD) + PlayerScore[i];
+          lumber = GetPlayerState(Player(i), PLAYER_STATE_RESOURCE_LUMBER);
+          //
+          if (YDWERPGBillingHasStatus(Player(i), "20010779")) {
+            gold = gold + 100000;
+            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "|cffffcc00购买了额外金币，初始资源+100000金币。|r");
+          }
+          if (YDWERPGBillingHasStatus(Player(i), "20010780")) {
+            lumber = lumber + 100000;
+            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "|cffffcc00购买了额外木材，初始资源+100000木材。|r");
+          }
+          SetPlayerState(Player(i), PLAYER_STATE_RESOURCE_GOLD, gold);
+          SetPlayerState(Player(i), PLAYER_STATE_RESOURCE_LUMBER, lumber);
+          DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, "|cffffcc00你的积分已转换为本局额外金币，由积分获得的额外金币："+I2S(PlayerScore[i])+"|r");
         }
       }
     }
 
     function AddPlayerPlatScore(player p, integer score) {
       integer playerId = GetPlayerId(p);
-      if (score <= 0) {
-        return;
-      }
-      if (addedScore[playerId] + score > 233) {
-        addedScore[playerId] = 233;
-        score = 233 - addedScore[playerId];
+      if (addedScore[playerId] + score > MaxJF) {
+        addedScore[playerId] = MaxJF;
+        score = MaxJF - addedScore[playerId];
       } else {
         addedScore[playerId] = addedScore[playerId] + score;
       }
-      YDWERPGAddKey(p, "a+233", score);
-    }
-
-    function SetPlayerTitle(player p, integer titleIndex) {
-      integer playerId = GetPlayerId(p);
-      if (titleIndex <= 0) {
+      if (score <= 0) {
         return;
       }
-      PlayerTitleCurr[playerId] = titleIndex;
-      YDWERPGSetKey(p, "ch", titleIndex);
-      if (!havebinary(PlayerTitles[playerId], titleIndex-1)) {
-        PlayerTitles[playerId] = PlayerTitles[playerId] + R2I(Pow(2, titleIndex-1));
-        YDWERPGAddKey(p, "c+1023", R2I(Pow(2, titleIndex-1)));
-      }
+      YDWERPGAddKey(p, "jf", score);
     }
 
     function GetPlayerTitle(integer playerid) -> string {
       return PlayerTitleStr[PlayerTitleCurr[playerid]];
-    }
-
-    function GetPlayerScoreUsed(integer playerid) -> integer {
-      return PlayerScoreUsed[playerid];
     }
 
     function GivePlayerThousandKillTitle(player p) {
@@ -118,11 +167,48 @@ library PlatformHelper requires SystemBinary, YDWERPGScores {
       DisplayTimedTextToForce(udg_PlayerForce, 30.0, "玩家"+GetPlayerName(p)+"奋勇杀敌，获得称号"+PlayerTitleStr[2]+"！" );
       SetPlayerTitle(p, 2);
     }
+
+    function PlatUpdateWinLose(integer winorlose) {
+      integer i;
+      string playernames = "";
+      // winorlose 1 完胜 0 胜利 失败
+      if (udg_CurrDiff <= 2 && winorlose == 1) {
+        DisplayTimedTextToForce(udg_PlayerForce, 30.0, udg_DiffStr[udg_CurrDiff]+"难度通关，请继续挑战下一个难度。");
+      }
+      for (0 <= i < 8) {
+        if (GetPlayerController(Player(i))==MAP_CONTROL_USER && GetPlayerSlotState(Player(i)) == PLAYER_SLOT_STATE_PLAYING) {
+          if (winorlose == 1) {
+            // 完胜
+            YDWERPGSetKey(Player(i), "ws"+I2S(udg_CurrDiff), PlayerWinStreak[i]+winorlose);
+            YDWERPGSetKey(Player(i), "wc"+I2S(udg_CurrDiff), PlayerWinCount[i]+winorlose);
+            AddPlayerPlatScore(Player(i), 50*udg_CurrDiff);
+            // 如果是专家难度，杀敌大于1000
+            if (udg_CurrDiff == 2) {
+              // 如果是困难难度
+              playernames = playernames + YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "，";
+              SetPlayerTitle(Player(i), 4);
+            }
+            if (udg_CurrDiff == 3 && udg_Kills[i] >= 1000) {
+              playernames = playernames + YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "，";
+              SetPlayerTitle(Player(i), 3);
+            }
+          } else {
+            // 其他情况连胜清空
+            YDWERPGSetKey(Player(i), "ws"+I2S(udg_CurrDiff), 0);
+          }
+        }
+      }
+      if (udg_CurrDiff == 2 && winorlose == 1) {
+        DisplayTimedTextToForce(udg_PlayerForce, 30.0, playernames + "挑战了自我，成功攻克难题，获得"+PlayerTitleStr[4]+"称号。");
+      } else if (udg_CurrDiff == 3 && winorlose == 1) {
+        DisplayTimedTextToForce(udg_PlayerForce, 30.0, "恭喜你们，超越了自我，创造了奇迹！");
+        DisplayTimedTextToForce(udg_PlayerForce, 30.0, "鉴于玩家" + playernames + "所作出的突出贡献，授予"+PlayerTitleStr[3]+"称号！");
+      } 
+    }
   }
 
   function onInit() {
-    InitWingIds();
-    InitPlayerTitleStr();
+    InitDialogs();
   }
   
 }

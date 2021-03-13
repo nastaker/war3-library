@@ -9,15 +9,52 @@ library DynamicRegister requires ItemAbilityMod {
     } else if (IsUnitType(u, UNIT_TYPE_SUMMONED)) {
     } else if (IsUnitType(u, UNIT_TYPE_HERO)) {
       // 动态注册英雄拾取物品、丢弃物品事件
-      TriggerRegisterUnitEvent(trg_Player_Hero_PickUp_Item, u, EVENT_UNIT_PICKUP_ITEM);
       TriggerRegisterUnitEvent(trg_Player_Hero_Drop_Item, u, EVENT_UNIT_DROP_ITEM);
     }
 
     u = null;
   }
 
+  function BoolexprUnitIsHero() -> boolean {
+    if (IsUnitType(GetFilterUnit(), UNIT_TYPE_HERO)) {
+      return true;
+    }
+    return false;
+  }
+
+  function GroupEnumGate() -> boolean {
+    if (GetUnitTypeId(GetFilterUnit()) == 'h007' || GetUnitTypeId(GetFilterUnit()) == 'h008') {
+      return true;
+    }
+    return false;
+  }
+
+  function ForGroupGateAddTriggerEvent() {
+    TriggerRegisterUnitEvent(gg_trg_OperateGate, GetEnumUnit(), EVENT_UNIT_ISSUED_ORDER);
+    SetUnitAnimationByIndex(GetEnumUnit(), 2);
+  }
+
+  function RegisterGate() {
+    timer t = GetExpiredTimer();
+    group g = CreateGroup();
+    GroupEnumUnitsInRange(g, 0, 0, 10000, function GroupEnumGate);
+    ForGroup(g, function ForGroupGateAddTriggerEvent);
+    DestroyGroup(g);
+    DestroyTimer(t);
+    t = null;
+    g = null;
+  }
+
   function onInit() {
-    YDWETriggerRegisterEnterRectSimpleNull(trg_Player_Unit_Enter_Map, bj_mapInitialPlayableArea);
+    timer t = CreateTimer();
+    integer i = 0;
+    TriggerRegisterEnterRectSimple(trg_Player_Unit_Enter_Map, bj_mapInitialPlayableArea);
+    //YDWETriggerRegisterEnterRectSimpleNull(trg_Player_Unit_Enter_Map, bj_mapInitialPlayableArea);
+    for (0 <= i < 12) {
+      TriggerRegisterPlayerUnitEvent(trg_Player_Hero_PickUp_Item, Player(i), EVENT_PLAYER_UNIT_PICKUP_ITEM, function BoolexprUnitIsHero);
+    }
     TriggerAddAction(trg_Player_Unit_Enter_Map, function DoAction);
+    TimerStart(t, 1.0, false, function RegisterGate);
+    t = null;
   }
 }

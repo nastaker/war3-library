@@ -6,37 +6,46 @@ library UnitSummoned requires NBonusMod {
     integer atk = 0;
     integer hp = 0;
     integer armor = 0;
+    integer atkspd = 0;
     real x = 0;
+    if (hero == null) {
+      return;
+    }
     if (GetUnitAbilityLevel(summon, summonedUnitAbility) > 0) {
       return;
     }
-    x = GetUnitLevel(summon) * (GetHeroLevel(hero) * 0.01);
-    atk = R2I(GetHeroInt(hero,false) * (0.10 * (udg_CurrDiff+1)) * x);
-    hp = R2I(GetHeroStr(hero,false) * x);
-    armor = R2I(GetHeroAgi(hero, false) * 0.10 * x);
+    x = GetUnitLevel(summon)*(GetHeroLevel(hero) * 0.01);
+    atk = R2I(GetHeroInt(hero,false) * (0.5+0.10*x));
+    atkspd =  GetHeroLevel(hero);
+    hp = R2I(GetHeroStr(hero,false) * (1+x));
+    armor = R2I(GetHeroAgi(hero,false) * (0.30 + 0.015 * x));
     if(GetUnitTypeId(summon) == 'ndr1' || GetUnitTypeId(summon) == 'ndr2' || GetUnitTypeId(summon) == 'ndr3' || GetUnitTypeId(summon) == 'n00F' || GetUnitTypeId(summon) == 'n00G') {
       atk = R2I(atk * 0.5);
       hp = R2I(hp * 0.5);
+    } else if (GetUnitTypeId(summon) == 'n017' ) {
+      hp = R2I(hp * 1 + GetUnitAbilityLevel(hero, 'ANrc') * 0.5);
+      atkspd = atkspd + GetUnitAbilityLevel(hero, 'ANrc') * 20;
     } else if (GetUnitAbilityLevel(summon, 'Aloc') > 0) {
+      atk = R2I(atk * 0.5);
       hp = 0;
-    } else if (GetUnitAbilityLevel(summon, 'A007') > 0) {
-      atk = atk + R2I(atk * GetHeroLevel(hero) * 0.05);
-      hp = hp + R2I(hp * GetHeroLevel(hero) * 0.05);
     } else if (GetUnitAbilityLevel(summon, 'BUan') > 0) {
       atk = atk * 3;
       hp = 0;
       UnitDamageAdd(summon, atk);
     }
-
-    UnitAddAbility(summon, summonedUnitAbility);
-    UnitMakeAbilityPermanent(summon, true, summonedUnitAbility);
-    UnitAtkAdd(summon, atk);
-    UnitMaxLifeAdd(summon, hp);
-    UnitArmorAdd(summon, armor);
-    UnitAtkSpdAdd(summon, GetHeroLevel(hero));
+    
     if (GetUnitAbilityLevel(summon, 'Aloc') == 0) {
       DestroyEffect(AddSpecialEffect("Abilities\\Spells\\Human\\MassTeleport\\MassTeleportCaster.mdl", GetUnitX(summon), GetUnitY(summon)));
     }
+
+    if (GetUnitAbilityLevel(summon, 'BUan') == 0 && GetUnitAbilityLevel(summon, 'B001') == 0) {
+      UnitAddAbility(summon, summonedUnitAbility);
+      UnitMakeAbilityPermanent(summon, true, summonedUnitAbility);
+      UnitAtkAdd(summon, atk);
+    }
+    UnitMaxLifeAdd(summon, hp);
+    UnitArmorAdd(summon, armor);
+    UnitAtkSpdAdd(summon, atkspd);
     hero = null;
     summon = null;
   }

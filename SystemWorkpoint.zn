@@ -1,194 +1,251 @@
-library SystemWorkpoint requires TimerUtils, SystemMultiboard {
-  
-  function CondEnumPlayerNeutralPassive() -> boolean {
-    boolean b = false;
-    unit u = GetFilterUnit();
-    if (GetUnitTypeId(u) == 'n003') {
-      b = true;
+library SystemWorkpoint requires SystemMultiboard {
+
+  integer UnitUpgradeAbility[];
+  // integer UnitUpgradeAbilityFake[];
+  public integer UnitUpgraded[8][6];
+  integer UnitUpgradeUnitTypeId[5];
+  integer UpgradeTypeCount = 5;
+  integer workpointPrice = 1000;
+  string UpgradeAbilityStr[];
+  integer MAX_UPGRADE_GOLD = 20000;
+  integer MAX_UPGRADE_WORKPOINT = 20;
+  integer lastUpgradePlayerId;
+  trigger trgUpgradeUnit;
+  // 技能：1、吸血50%，2、击晕，3、魔免
+  // 100工分一次。
+
+  function UnitUpgradeByTypeId(unit u, integer typeId, integer extra) {
+    integer atk = 5;
+    integer def = 5;
+    integer atkspd = 5;
+    integer life = 50;
+    if (IsUnitType(u, UNIT_TYPE_RANGED_ATTACKER)) {
+      atk = 2;
+      def = 2;
+      atkspd = 2;
+      life = 10;
     }
-    return b;
+    if (IsUnitType(u, UNIT_TYPE_SUMMONED)) {
+      atk = atk / 2;
+      def = def / 2;
+      atkspd = atkspd / 2;
+      life = life / 2;
+    }
+    if (typeId == 0) {
+      // 选择单位增加攻击力
+      UnitAtkAdd(u, extra * atk * GetUnitLevel(u));
+    } else if (typeId == 1) {
+      // 选择单位增加防御力
+      UnitArmorAdd(u, extra * def * GetUnitLevel(u));
+    } else if (typeId == 2) {
+      // 选择单位增加攻击速度
+      UnitAtkSpdAdd(u, extra * atkspd * GetUnitLevel(u));
+    } else if (typeId == 3) {
+      // 选择单位增加生命值
+      UnitMaxLifeAdd(u, extra * life * GetUnitLevel(u));
+    } else if (typeId == 4) {
+      UnitAddAbility(u, UnitUpgradeAbility[typeId]);
+      UnitMakeAbilityPermanent(u, true, UnitUpgradeAbility[typeId]);
+    }
   }
 
-  function isWorkpointEnough(integer workpoint, integer diffWorkpoint) -> boolean {
-    if (workpoint < diffWorkpoint) {
-      DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "工分不足，无法兑换。");
+  function trgUpgradeUnitAction() {
+    group g = null;
+    unit u = null;
+    g = CreateGroup();
+    GroupEnumUnitsOfPlayer(g, Player(lastUpgradePlayerId), null);
+    u = FirstOfGroup(g);
+    while(u!=null) {
+      if (GetUnitState(u, UNIT_STATE_LIFE) > 0 &&
+      IsUnitType(u, UNIT_TYPE_STRUCTURE) == false && IsUnitType(u, UNIT_TYPE_ANCIENT) == false &&
+      (IsUnitType(u, UNIT_TYPE_HERO) == false) && (IsUnitType(u, UNIT_TYPE_PEON) == false) &&
+      (IsUnitType(u, UNIT_TYPE_MELEE_ATTACKER) || IsUnitType(u, UNIT_TYPE_RANGED_ATTACKER))) {
+        UnitUpgradeByTypeId(u, udg_PlayerUnitUpgradeType[lastUpgradePlayerId], 1);
+      }
+      GroupRemoveUnit(g, u);
+      u = FirstOfGroup(g);
+    }
+    GroupClear(g);
+    DestroyGroup(g);
+    g = null;
+    u = null;
+  }
+
+  function InitUpgradeUnitStr() {
+    integer i, j;
+    UpgradeAbilityStr[0] = "基础攻击力";
+    UpgradeAbilityStr[1] = "额外防御力";
+    UpgradeAbilityStr[2] = "攻击速度";
+    UpgradeAbilityStr[3] = "最大生命值";
+    UpgradeAbilityStr[4] = "暴击：有20%概率造成2倍于普通攻击的伤害";
+    UnitUpgradeAbility[4] = 'ACct';
+    UnitUpgradeUnitTypeId[0] = 'n01B';
+    UnitUpgradeUnitTypeId[1] = 'n01C';
+    UnitUpgradeUnitTypeId[2] = 'n01D';
+    UnitUpgradeUnitTypeId[3] = 'n00L';
+    UnitUpgradeUnitTypeId[4] = 'n003';
+    for (0 <= i < 8) {
+      for (0 <= j < UpgradeTypeCount) {
+        UnitUpgraded[i][j] = 0;
+      }
+    }
+    trgUpgradeUnit = CreateTrigger();
+    TriggerAddAction(trgUpgradeUnit, function trgUpgradeUnitAction);
+  }
+
+  function isWorkpointEnough(integer playerId, integer diffWorkpoint) -> boolean {
+    if (udg_PlayerWorkPoint[playerId] < diffWorkpoint) {
+      DisplayTextToPlayer(Player(playerId), 0, 0, "工分不足，无法兑换。");
       return false;
     }
     return true;
   }
 
-  function SellUnit() {
-    integer soldUnitId = GetUnitTypeId(GetSoldUnit());
-    integer diffWorkpoint = 0;
-    integer playerId = GetPlayerId(GetOwningPlayer(GetBuyingUnit()));
-    integer workpoint = udg_PlayerWorkPoint[playerId];
-    // 删除购买的单位
-    RemoveUnit(GetSoldUnit());
-    // 保存unit
-    if (soldUnitId == 'n00W') {
-      // 左侧信号
-      PingMinimapEx(-8696.00, 2020.00, 1, 255, 255, 0, false);
-      PingMinimapEx(-5105.00, 2698.00, 1, 255, 255, 0, false);
-      PingMinimapEx(-8696.00, -2020.00, 1, 255, 255, 0, false);
-      PingMinimapEx(-8696.00, -8192.00, 1, 255, 255, 0, false);
-      // 右侧信号
-      PingMinimapEx(8696.00, 2020.00, 1, 255, 255, 0, false);
-      PingMinimapEx(5105.00, 2698.00, 1, 255, 255, 0, false);
-      PingMinimapEx(8696.00, -2020.00, 1, 255, 255, 0, false);
-      PingMinimapEx(8696.00, -8192.00, 1, 255, 255, 0, false);
-      // --------------------
-      PlaySoundBJ(gg_snd_Hint);
-    } else {
-      if (soldUnitId == 'n00M') {
-        // 兑换5等级
-        if (GetHeroLevel(GetBuyingUnit()) >= 100) {
-          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "英雄等级已到达满级，无法兑换等级。");
-          return;
-        }
-        // 减少50工分
-        diffWorkpoint = 50;
-        if (isWorkpointEnough(workpoint, diffWorkpoint)) {
-          SetHeroLevel(GetBuyingUnit(), GetHeroLevel(GetBuyingUnit())+5, true);
-          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "已成功兑换英雄等级。");
-        }
-      } else if (soldUnitId == 'n00U') {
-        // 兑换4000木材 减少20工分
-        diffWorkpoint = 20;
-        if (isWorkpointEnough(workpoint, diffWorkpoint)) {
-          AdjustPlayerStateBJ(4000, GetOwningPlayer(GetBuyingUnit()), PLAYER_STATE_RESOURCE_LUMBER);
-          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "已成功兑换木材。");
-        }
-      } else if (soldUnitId == 'n00N') {
-        // 兑换5000金币 减少20工分
-        diffWorkpoint = 20;
-        if (isWorkpointEnough(workpoint, diffWorkpoint)) {
-          AdjustPlayerStateBJ(5000, GetOwningPlayer(GetBuyingUnit()), PLAYER_STATE_RESOURCE_GOLD);
-          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "已成功兑换金币。");
-        }
-      } else if (soldUnitId == 'n00L') {
-        // 兑换20力量 减少50工分
-        diffWorkpoint = 50;
-        if (isWorkpointEnough(workpoint, diffWorkpoint)) {
-          ModifyHeroStat(bj_HEROSTAT_STR, GetBuyingUnit(), bj_MODIFYMETHOD_ADD, 20);
-          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "已成功兑换力量属性。");
-        }
-      } else if (soldUnitId == 'n00P') {
-        // 兑换20敏捷 减少50工分
-        diffWorkpoint = 50;
-        if (isWorkpointEnough(workpoint, diffWorkpoint)) {
-          ModifyHeroStat(bj_HEROSTAT_AGI, GetBuyingUnit(), bj_MODIFYMETHOD_ADD, 20);
-          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "已成功兑换敏捷属性。");
-        }
-      } else if (soldUnitId == 'n00S') {
-        // 兑换20智力 减少50工分
-        diffWorkpoint = 50;
-        if (isWorkpointEnough(workpoint, diffWorkpoint)) {
-          ModifyHeroStat(bj_HEROSTAT_INT, GetBuyingUnit(), bj_MODIFYMETHOD_ADD, 20);
-          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "已成功兑换智力属性。");
-        }
-      } else if (soldUnitId == 'n019') {
-        // 兑换刷新技能冷却时间
-        diffWorkpoint = 300;
-        if (isWorkpointEnough(workpoint, diffWorkpoint)) {
-          UnitResetCooldown(GetBuyingUnit());
-          udg_PlayerDedication[playerId] = udg_PlayerDedication[playerId] + 50;
-          DisplayTextToPlayer(GetOwningPlayer(GetBuyingUnit()), 0, 0, "已成功刷新技能冷却时间。|n增加贡献值50点。");
-        }
+  public function ShowTips() {
+    DisplayTextToForce(udg_PlayerForce, "在酒馆旁边的|cffffcc00修补匠|r处可以升级单位属性。不需要英雄亲自前往。单位也可以帮忙升级。");
+  }
+
+  public function ShowUnitUpgrade(integer playerId) {
+    DisplayTextToPlayer(Player(playerId), 0, 0, 
+"当前单位升级：\n攻击力：" + I2S(UnitUpgraded[playerId][0]) + "级，升级需要："+I2S(Min(MAX_UPGRADE_WORKPOINT,1+UnitUpgraded[playerId][0]))+ "工分或"+I2S(Min(workpointPrice*(1+UnitUpgraded[playerId][0]),MAX_UPGRADE_GOLD)) + "金币。\n"+
+"防御力：" + I2S(UnitUpgraded[playerId][1]) + "级，升级需要："+I2S(Min(MAX_UPGRADE_WORKPOINT,1+UnitUpgraded[playerId][1]))+ "工分或"+I2S(Min(workpointPrice*(1+UnitUpgraded[playerId][1]),MAX_UPGRADE_GOLD)) + "金币。\n"+
+"攻击速度：" + I2S(UnitUpgraded[playerId][2]) + "级，升级需要："+I2S(Min(MAX_UPGRADE_WORKPOINT,1+UnitUpgraded[playerId][2]))+ "工分或"+I2S(Min(workpointPrice*(1+UnitUpgraded[playerId][2]),MAX_UPGRADE_GOLD)) + "金币。\n"+
+"最大生命值：" + I2S(UnitUpgraded[playerId][3]) + "级，升级需要："+I2S(Min(MAX_UPGRADE_WORKPOINT,1+UnitUpgraded[playerId][3]))+ "工分或"+I2S(Min(workpointPrice*(1+UnitUpgraded[playerId][3]),MAX_UPGRADE_GOLD)) + "金币。");
+  }
+
+  public function UpgradeSummonedUnit(unit u) {
+    integer i = 0;
+    integer playerId = GetPlayerId(GetOwningPlayer(u));
+    for (0 <= i < UpgradeTypeCount) {
+      if (UnitUpgraded[playerId][i] > 0) {
+        UnitUpgradeByTypeId(u, i, UnitUpgraded[playerId][i]);
       }
-      workpoint = workpoint - diffWorkpoint;
-      if (workpoint < 0) {
+    }
+    u = null;
+  }
+
+  public function UpgradeUnit(unit u) {
+    integer i = 0;
+    integer playerId = GetPlayerId(GetOwningPlayer(u));
+    for (0 <= i < UpgradeTypeCount) {
+      if (UnitUpgraded[playerId][i] > 0) {
+        UnitUpgradeByTypeId(u, i, UnitUpgraded[playerId][i]);
+      }
+    }
+    u = null;
+  }
+
+  function ExchangeResource(integer playerId, integer diffWorkpoint, playerstate state) {
+    integer targ = 0;
+    if (havebinary(udg_CFG_EXCHANGE_ENABLE, udg_CurrDiff) == false) {
+      DisplayTextToPlayer(Player(playerId), 0, 0, "该难度下禁止兑换工分。");
+      return;
+    }
+    if (diffWorkpoint == 0) {
+      diffWorkpoint = 5;
+    }
+    if (udg_PlayerWorkPoint[playerId] < diffWorkpoint) {
+      diffWorkpoint = udg_PlayerWorkPoint[playerId];
+    }
+    if (diffWorkpoint == 0) {
+      DisplayTextToPlayer(Player(playerId), 0, 0, "你没有工分了，无法兑换。");
+      return;
+    }
+    udg_PlayerWorkPoint[playerId] = udg_PlayerWorkPoint[playerId] - diffWorkpoint;
+    UpdateMultiboardPlayerId(playerId);
+    // price workpoint
+    targ = diffWorkpoint * udg_CFG_WORKPOINT_PRICE;
+    SetPlayerState(Player(playerId), state, GetPlayerState(Player(playerId), state) + targ);
+    DisplayTextToPlayer(Player(playerId), 0, 0, "您使用"+I2S(diffWorkpoint)+"工分兑换了"+I2S(targ)+"点资源。");
+  }
+
+  public function ExchangeGold(integer playerId, integer diffWorkpoint) {
+    ExchangeResource(playerId, diffWorkpoint, PLAYER_STATE_RESOURCE_GOLD);
+  }
+
+  public function ExchangeLumber(integer playerId, integer diffWorkpoint) {
+    ExchangeResource(playerId, diffWorkpoint, PLAYER_STATE_RESOURCE_LUMBER);
+  }
+
+  function UpgradeUnitTech(integer playerId, integer typeId) {
+    boolean isUpgrade = false;
+    integer diffWorkpoint;
+    if (typeId >= 4) {
+      diffWorkpoint = 100;
+      if (UnitUpgraded[playerId][typeId] > 0) {
+        DisplayTextToPlayer(Player(playerId), 0, 0, "["+UpgradeAbilityStr[typeId]+"]最高等级为1级，无法继续升级。");
         return;
       }
-      udg_PlayerWorkPoint[playerId] = workpoint;
+    } else {
+      diffWorkpoint = 1 + UnitUpgraded[playerId][typeId];
+      diffWorkpoint = Min(diffWorkpoint, MAX_UPGRADE_WORKPOINT);
+    }
+    if (udg_PlayerWorkPoint[playerId] >= diffWorkpoint) {
+      udg_PlayerWorkPoint[playerId] = udg_PlayerWorkPoint[playerId] - diffWorkpoint;
       UpdateMultiboardPlayerId(playerId);
+      isUpgrade = true;
+    } else if (typeId < 4 && GetPlayerState(Player(playerId), PLAYER_STATE_RESOURCE_GOLD) >= diffWorkpoint * workpointPrice) {
+      SetPlayerState(Player(playerId), PLAYER_STATE_RESOURCE_GOLD, GetPlayerState(Player(playerId), PLAYER_STATE_RESOURCE_GOLD) - diffWorkpoint * workpointPrice);
+      isUpgrade = true;
+    }
+    if (isUpgrade) {
+      UnitUpgraded[playerId][typeId] = UnitUpgraded[playerId][typeId] + 1;
+      UpdateMultiboardPlayerId(playerId);
+      DisplayTextToPlayer(Player(playerId), 0, 0, "已升级单位技能：["+UpgradeAbilityStr[typeId]+"]。");
+      if (typeId < 4) {
+        udg_PlayerUnitUpgradeType[playerId] = typeId;
+        lastUpgradePlayerId = playerId;
+        TriggerExecute(trgUpgradeUnit);
+      }
+    } else {
+      if (typeId < 4) {
+        DisplayTextToPlayer(Player(playerId), 0, 0, "工分或金币不足，无法升级。");
+      } else {
+        DisplayTextToPlayer(Player(playerId), 0, 0, "工分不足，无法升级。");
+      }
     }
   }
 
-  function InitPlayerNeutralSellUnit() {
-    timer t = GetExpiredTimer();
-    trigger trg = CreateTrigger();
-    unit u = null;
-    group g = CreateGroup();
-    GroupEnumUnitsOfPlayer(g, Player(PLAYER_NEUTRAL_PASSIVE), Condition(function CondEnumPlayerNeutralPassive));
-    do {
-      u = FirstOfGroup(g);
-      if (u == null) {
-        DestroyGroup(g);
-        g = null;
-        break;
+  public function SellUnit() {
+    unit hero = GetBuyingUnit();
+    integer soldUnitId = GetUnitTypeId(GetSoldUnit());
+    integer playerId = GetPlayerId(GetOwningPlayer(hero));
+    integer i;
+    // 删除购买的单位
+    RemoveUnit(GetSoldUnit());
+    // 兵种升级
+    for (0 <= i <= 5) {
+      if (soldUnitId == UnitUpgradeUnitTypeId[i]) {
+        UpgradeUnitTech(playerId, i);
+        return;
       }
-      TriggerRegisterUnitEvent(trg, u, EVENT_UNIT_SELL);
-      GroupRemoveUnit(g, u);
-    } while(u != null);
-    //TriggerRegisterPlayerUnitEvent(trg, Player(PLAYER_NEUTRAL_PASSIVE), EVENT_PLAYER_UNIT_SELL, null);
-    TriggerAddAction(trg, function SellUnit);
-    ReleaseTimer(t);
-    trg = null;
-    t = null;
+    }
+    if (soldUnitId == 'n00J') {
+      // 更改称号
+      ShowTitleChangeDialog(Player(playerId));
+    } else if (soldUnitId == 'n00M') {
+      // 兑换金币
+      ExchangeGold(playerId, 5);
+    } else if (soldUnitId == 'n00N') {
+      // 兑换木材
+      ExchangeLumber(playerId, 5);
+    }
+    hero = null;
   }
-
-
-  // 存放玩家贡献值
-  real dediPercent[];
-  real avgDedi;
 
   function ForPlayerCalculateWorkPoint() {
     integer playerId = GetPlayerId(GetEnumPlayer());
     integer allocatedWorkpoint = 0;
-    if (udg_IsPlayerQualified[playerId]) {
-      dediPercent[playerId] = avgDedi;
-    }
-    allocatedWorkpoint = R2I(dediPercent[playerId] * udg_WorkPointPool);
+    allocatedWorkpoint = 5 * (1+udg_RoundIndex);
     udg_PlayerWorkPoint[playerId] = udg_PlayerWorkPoint[playerId] + allocatedWorkpoint;
-    DisplayTextToPlayer(GetEnumPlayer(), 0, 0, "本轮工分结算：您的贡献百分比为："+R2SW(dediPercent[playerId]*100, 4, 2)+"%，您获得到的工分为："+I2S(allocatedWorkpoint)+"。");
+    DisplayTextToPlayer(GetEnumPlayer(), 0, 0, "|cff66ccff获得工分："+I2S(allocatedWorkpoint)+"，可用于购买单位属性升级，在修补匠处使用。|r");
   }
 
   public function UpdateWorkPoint() {
-    // 统计公共工分池中总分，将其分配给各个玩家
-    // 当前贡献值之和
-    real dedi = 1.0;
-    integer sumDedi = 0;
-    integer maxDedi = udg_PlayerDedication[0];
-    integer avgCount = 0;
-    integer i = 0;
-    avgDedi = 0.0;
-    for (0 <= i < 8) {
-      if (udg_PlayerDedication[i] > 0) {
-        sumDedi = sumDedi + udg_PlayerDedication[i];
-        if (maxDedi < udg_PlayerDedication[i]) {
-          maxDedi = udg_PlayerDedication[i];
-        } 
-      }
-    }
-    // 玩家贡献值
-    for (0 <= i < 8) {
-      if (udg_PlayerDedication[i] >= R2I(maxDedi*0.5)) {
-        // 总贡献达到最高玩家的一半，均分剩下的工分
-        avgCount = avgCount + 1;
-        udg_IsPlayerQualified[i] = true;
-      } else if (udg_PlayerDedication[i] > 0) {
-        // 贡献不足，只能得到极少部分
-        udg_IsPlayerQualified[i] = false;
-        dediPercent[i] = I2R(udg_PlayerDedication[i]) / I2R(sumDedi);
-        dedi = dedi - dediPercent[i];
-      } else {
-        dediPercent[i] = 0;
-      }
-    }
-    // dedi 是剩下的百分比，要与avgCount除后均分
-    avgDedi = dedi / avgCount;
-    // dediPercent 是分给少数玩家的百分比，直接×总工分
     ForForce(udg_PlayerForce, function ForPlayerCalculateWorkPoint);
-    // 工分池转移到已分配的工分池
-    udg_WorkPointPoolAllocated = udg_WorkPointPoolAllocated + udg_WorkPointPool;
-    // 工分池清零
-    udg_WorkPointPool = 0;
   }
 
   function onInit() {
-    timer initunitsellTimer = NewTimer();
-    // 初始化在中立英雄处合成打造、建筑处兑换物品的触发
-    TimerStart(initunitsellTimer, 1.00, false, function InitPlayerNeutralSellUnit);
-    initunitsellTimer = null;
+    InitUpgradeUnitStr();
   }
 }
