@@ -15,8 +15,8 @@ library SystemMultiboard requires GlobalVar, optional PlatformHelper {
     MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 2], YDWEGetPlayerColorString(Player(playerIndex), I2S(udg_PlayerWorkPoint[playerIndex])));
     // 设置玩家单位升级
     MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 3], YDWEGetPlayerColorString(Player(playerIndex), I2S(UnitUpgraded[playerIndex][0])+"攻"+I2S(UnitUpgraded[playerIndex][1])+"防"+I2S(UnitUpgraded[playerIndex][2])+"速"+I2S(UnitUpgraded[playerIndex][3])+"血"));
-    // 从这列开始，平台上游玩且难度大于【娱乐】才会有
-    if (udg_IsOnPlat11 && udg_CurrDiff > 0) {
+    // 从这列开始，平台上游玩才会有
+    if (udg_IsOnPlat11) {
       // 设置玩家积分
       MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 4], YDWEGetPlayerColorString(Player(playerIndex), I2S(PlayerScore[playerIndex])));
       // 设置玩家本局积分
@@ -155,11 +155,17 @@ library SystemMultiboard requires GlobalVar, optional PlatformHelper {
       TimerStart(timerEnemyCount, 120.0, true, function CalcEnemyCount);
       // 显示敌人总数
       MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
-      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.16);
-      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "敌人数量(超过300失败)：");
+      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.10);
+      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "敌人数量：");
       MultiboardItem[(row * ColCount) + 1] = MultiboardGetItem(Multiboard, row, 1);
-      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 1], 0.08);
+      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 1], 0.04);
       MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 1], "0");
+      MultiboardItem[(row * ColCount) + 2] = MultiboardGetItem(Multiboard, row, 2);
+      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 2], 0.10);
+      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 2], "超过失败：");
+      MultiboardItem[(row * ColCount) + 3] = MultiboardGetItem(Multiboard, row, 3);
+      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 3], 0.04);
+      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 3], I2S(udg_MaxEnemyCount));
       row = row + 1;
       // 设置表底格栅
       MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);

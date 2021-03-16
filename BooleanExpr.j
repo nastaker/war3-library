@@ -31,7 +31,7 @@ library BooleanExpr
     if IsUnitType(GetFilterUnit(),UNIT_TYPE_MAGIC_IMMUNE)==true then
       return false
     endif
-    if IsUnitAlly(GetFilterUnit(), Player(0)) then
+    if IsUnitAlly(GetFilterUnit(), GetOwningPlayer(GetTriggerUnit())) then
       return false
     endif
     return true
@@ -50,7 +50,7 @@ library BooleanExpr
     if IsUnitType(GetFilterUnit(),UNIT_TYPE_MAGIC_IMMUNE)==true then
       return false
     endif
-    if IsUnitAlly(GetFilterUnit(), Player(0)) then
+    if IsUnitAlly(GetFilterUnit(), GetOwningPlayer(GetTriggerUnit())) then
       return false
     endif
     return true
@@ -135,7 +135,7 @@ library BooleanExpr
     if IsUnitType(GetFilterUnit(),UNIT_TYPE_STRUCTURE)==true then
       return false
     endif
-    if IsUnitAlly(GetFilterUnit(), Player(0)) then
+    if IsUnitAlly(GetFilterUnit(), GetOwningPlayer(GetTriggerUnit())) then
       return false
     endif
     return true
@@ -154,7 +154,7 @@ library BooleanExpr
     if IsUnitType(GetFilterUnit(),UNIT_TYPE_MAGIC_IMMUNE)==true then
       return false
     endif
-    if IsUnitAlly(GetFilterUnit(), Player(0)) then
+    if IsUnitAlly(GetFilterUnit(), GetOwningPlayer(GetTriggerUnit())) then
       return false
     endif
     if IsUnitType(GetFilterUnit(), UNIT_TYPE_FLYING) then

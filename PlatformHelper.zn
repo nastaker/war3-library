@@ -1,6 +1,7 @@
 library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
 
   dialog dlgTitle;
+  integer TITLE_COUNT = 8;
   button btnTitle[];
 
   public {
@@ -30,6 +31,10 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
       if (titleIndex <= 0) {
         return;
       }
+      if (!havebinary(PlayerTitles[playerId], PlayerTitleCurr[playerId]-1)) {
+        PlayerTitles[playerId] = PlayerTitles[playerId] + R2I(Pow(2, PlayerTitleCurr[playerId]-1));
+        YDWERPGAddKey(p, "c+1023", R2I(Pow(2, PlayerTitleCurr[playerId]-1)));
+      }
       PlayerTitleCurr[playerId] = titleIndex;
       YDWERPGSetKey(p, "ch", titleIndex);
       if (!havebinary(PlayerTitles[playerId], titleIndex-1)) {
@@ -40,7 +45,7 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
 
     function DialogTitleClick() {
       integer i;
-      for (0 <= i < 6) {
+      for (0 <= i < TITLE_COUNT) {
         if (GetClickedButton() == btnTitle[i]) {
           SetPlayerTitle(GetTriggerPlayer(), i);
           isPlayerChangedTitle[GetPlayerId(GetTriggerPlayer())] = true;
@@ -68,10 +73,10 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
       }
       DialogClear(dlgTitle);
       DialogSetMessage(dlgTitle, "请选择称号");
-      for (0 <= i <= 6) {
-        if (havebinary(PlayerTitles[playerId], i) && i < 6) {
+      for (0 <= i <= TITLE_COUNT) {
+        if (havebinary(PlayerTitles[playerId], i) && i < TITLE_COUNT) {
           btnTitle[i] = DialogAddButton(dlgTitle, PlayerTitleStr[i+1], 0);
-        } else if (i==6) {
+        } else if (i==TITLE_COUNT) {
           btnTitle[i] = DialogAddButton(dlgTitle, "取消", 0);
         }
       }
@@ -116,6 +121,7 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
           PlayerScore[i] = YDWERPGGetKey(Player(i), "jf");
           PlayerWinStreak[i] = YDWERPGGetKey(Player(i), "ws"+I2S(udg_CurrDiff));
           PlayerWinCount[i] = YDWERPGGetKey(Player(i), "wc"+I2S(udg_CurrDiff));
+          udg_PlayerTitleApply[i] = PlayerTitleCurr[i];
           // 默认设置连胜数清零，结束后若胜利则+1
           YDWERPGSetKey(Player(i), "ws"+I2S(udg_CurrDiff), 0);
           // 若jf小于a+233，迁移数据
@@ -128,11 +134,21 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
           //
           if (YDWERPGBillingHasStatus(Player(i), "20010779")) {
             gold = gold + 100000;
-            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "|cffffcc00购买了额外金币，初始资源+100000金币。|r");
+            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "|cffffcc00购买了金币，初始资源增加100000金币。|r");
           }
           if (YDWERPGBillingHasStatus(Player(i), "20010780")) {
             lumber = lumber + 100000;
-            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "|cffffcc00购买了额外木材，初始资源+100000木材。|r");
+            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "|cffffcc00购买了木材，初始资源增加100000木材。|r");
+          }
+          if (udg_PlayerTitleApply[i] == 2) {
+            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "|cffffcc00使用了千人斩称号，英雄等级提升时全属性+1。|r");
+          } else if (udg_PlayerTitleApply[i] == 7) {
+            gold = gold + 1000;
+            lumber = lumber + 1000;
+            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "|cffffcc00使用了测试员称号，初始资源增加1000金币及1000木材。|r");
+          } else if (udg_PlayerTitleApply[i] == 8) {
+            udg_PlayerBuildSpeed[i] = 80;
+            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "|cffffcc00使用了建筑师称号，建造速度+80%。|r");
           }
           SetPlayerState(Player(i), PLAYER_STATE_RESOURCE_GOLD, gold);
           SetPlayerState(Player(i), PLAYER_STATE_RESOURCE_LUMBER, lumber);
@@ -164,8 +180,17 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
       if (havebinary(PlayerTitles[playerId], 2)) {
         return;
       }
-      DisplayTimedTextToForce(udg_PlayerForce, 30.0, "玩家"+GetPlayerName(p)+"奋勇杀敌，获得称号"+PlayerTitleStr[2]+"！" );
+      DisplayTimedTextToForce(udg_PlayerForce, 30.0, "玩家"+GetPlayerName(p)+"奋勇杀敌，获得称号"+PlayerTitleStr[2]+"！\n称号效果：英雄升级时增加1点全属性。\n下次进入游戏时生效。" );
       SetPlayerTitle(p, 2);
+    }
+
+    function GivePlayerBuildMasterTitle(player p) {
+      integer playerId = GetPlayerId(p);
+      if (havebinary(PlayerTitles[playerId], 8)) {
+        return;
+      }
+      DisplayTimedTextToForce(udg_PlayerForce, 30.0, "玩家"+GetPlayerName(p)+"建筑技巧娴熟，获得称号"+PlayerTitleStr[8]+"！\n称号效果：建筑建造、升级速度提升80%。\n下次进入游戏时生效。" );
+      SetPlayerTitle(p, 8);
     }
 
     function PlatUpdateWinLose(integer winorlose) {

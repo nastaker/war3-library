@@ -18,6 +18,17 @@ library UnitGroupSpell {
     SaveBoolean(ht, 'ANso', 'gspl', true);
     SaveBoolean(ht, 'ANdo', 'gspl', true);
     SaveBoolean(ht, 'A01D', 'gspl', true);
+
+    SaveBoolean(ht, 'AEnr', 'gspl', true);
+    SaveBoolean(ht, 'ACcl', 'gspl', true);
+    SaveBoolean(ht, 'ACcr', 'gspl', true);
+    SaveBoolean(ht, 'Acrs', 'gspl', true);
+    SaveBoolean(ht, 'ACfd', 'gspl', true);
+    SaveBoolean(ht, 'ACfn', 'gspl', true);
+    SaveBoolean(ht, 'ACtb', 'gspl', true);
+    SaveBoolean(ht, 'ACsh', 'gspl', true);
+    SaveBoolean(ht, 'ACls', 'gspl', true);
+
     SaveReal(ht, 'A01D', 'rang', 600.);
     // 技能是否持续施法技能
     // 群体释放时，马甲释放的技能

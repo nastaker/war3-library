@@ -3,9 +3,9 @@ library GlobalVar {
   public {
     string qqgroup = "39055594";
     string author = "Nastaker";
-    string date = "2021/03/13";
-    string ver = "1.26a10";
-    string ROUND_SETTING = "180,80,100,2,8,1,0.5,24,0,0,0,0,0,0;150,70,80,1,8,2,0.5,28,5,5,3,5,0,0;120,50,60,1,8,3,0.5,32,10,10,5,10,17440,50;100,40,40,0,8,4,0.5,36,15,15,9,15,43296,100;";
+    string date = "2021/03/16";
+    string ver = "1.27a1";
+    string ROUND_SETTING = "180,80,100,2,8,1,0.5,24,0,0,0,0,0,0,300;150,70,80,1,8,2,0.5,28,5,5,3,5,0,0,300;120,50,60,1,8,3,0.5,32,10,10,5,10,17440,50,300;100,40,40,0,8,4,0.5,36,15,15,9,15,43296,100,400;";
     string ENEMY_SETTING = "0.5,5,1,10,3,1,200,50,1,1,0,0,0.5;1,5,1.01,20,4,1,200,60,1,2,0,0,0.5;2,5,1.02,35,5,1,200,70,1,2,0,0,0.5;3,5,1.03,50,6,1,200,100,1,2,0,0,0.5;";
 
     string PlayerTitleStr[];
@@ -83,6 +83,9 @@ library GlobalVar {
           } else if (typeIndex == 13) {
             // 偷袭隐形概率(1-100随机，小于等于此值时隐形)：
             udg_StrikeInvProb = S2I(valueStr);
+          } else if (typeIndex == 14) {
+            // 最大敌人数量
+            udg_MaxEnemyCount = S2I(valueStr);
           }
           startIndex = i+1;
           typeIndex = typeIndex + 1;
@@ -189,8 +192,10 @@ library GlobalVar {
     PlayerTitleStr[4] = "|cffff1111迎难而上|r";
     PlayerTitleStr[5] = "|cffff1111披荆斩棘|r";
     PlayerTitleStr[6] = "|cffffcc00战无不胜|r";
+    PlayerTitleStr[7] = "|cff39C5BB测试员|r";
+    PlayerTitleStr[8] = "|cffff9900建筑师|r";
   }
-  
+
   function onInit() {
     InitWingIds();
     InitPlayerTitleStr();
