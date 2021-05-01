@@ -11,41 +11,59 @@ library SystemWorkpoint requires SystemMultiboard {
   integer MAX_UPGRADE_WORKPOINT = 20;
   integer lastUpgradePlayerId;
   trigger trgUpgradeUnit;
+  integer ATK_BUFF[];
+  integer DEF_BUFF[];
+  integer ATKSPD_BUFF[];
+  integer LIFE_BUFF[];
+  integer i, lvl, upgrade, userdata;
   // 技能：1、吸血50%，2、击晕，3、魔免
   // 100工分一次。
 
-  function UnitUpgradeByTypeId(unit u, integer typeId, integer extra) {
-    integer atk = 5;
-    integer def = 5;
-    integer atkspd = 5;
-    integer life = 50;
+  function UnitUpgradeByTypeId(unit u, integer typeId) {
+    integer playerId = GetPlayerId(GetOwningPlayer(u));
+    integer buffIndex = 0;
+    userdata = GetUnitUserData(u);
+    if (typeId == 4) {
+      UnitAddAbility(u, UnitUpgradeAbility[typeId]);
+      UnitMakeAbilityPermanent(u, true, UnitUpgradeAbility[typeId]);
+      return;
+    }
+    for(0 <= i < 4) {
+      if (typeId == i) {
+        lvl = ModuloInteger(userdata / R2I(Pow(100, 3 - i)), 100);
+        upgrade = UnitUpgraded[playerId][i];
+        if (upgrade < lvl) {
+          upgrade = lvl;
+        }
+        if (upgrade > 99) {
+          upgrade = 99;
+        }
+        upgrade = upgrade - lvl;
+        if (upgrade == 0) {
+          return;
+        }
+        SetUnitUserData(u, userdata + upgrade * R2I(Pow(100, 3 - i)));
+      }
+    }
     if (IsUnitType(u, UNIT_TYPE_RANGED_ATTACKER)) {
-      atk = 2;
-      def = 2;
-      atkspd = 2;
-      life = 10;
+      buffIndex = 1;
     }
     if (IsUnitType(u, UNIT_TYPE_SUMMONED)) {
-      atk = atk / 2;
-      def = def / 2;
-      atkspd = atkspd / 2;
-      life = life / 2;
+      buffIndex = buffIndex + 2;
     }
     if (typeId == 0) {
       // 选择单位增加攻击力
-      UnitAtkAdd(u, extra * atk * GetUnitLevel(u));
+      // 攻击力放在最开始两位，如 攻99防88速77血66
+      UnitAtkAdd(u, upgrade * ATK_BUFF[buffIndex] * GetUnitLevel(u));
     } else if (typeId == 1) {
       // 选择单位增加防御力
-      UnitArmorAdd(u, extra * def * GetUnitLevel(u));
+      UnitArmorAdd(u, upgrade * DEF_BUFF[buffIndex] * GetUnitLevel(u));
     } else if (typeId == 2) {
       // 选择单位增加攻击速度
-      UnitAtkSpdAdd(u, extra * atkspd * GetUnitLevel(u));
+      UnitAtkSpdAdd(u, upgrade * ATKSPD_BUFF[buffIndex] * GetUnitLevel(u));
     } else if (typeId == 3) {
       // 选择单位增加生命值
-      UnitMaxLifeAdd(u, extra * life * GetUnitLevel(u));
-    } else if (typeId == 4) {
-      UnitAddAbility(u, UnitUpgradeAbility[typeId]);
-      UnitMakeAbilityPermanent(u, true, UnitUpgradeAbility[typeId]);
+      UnitMaxLifeAdd(u, upgrade * LIFE_BUFF[buffIndex] * GetUnitLevel(u));
     }
   }
 
@@ -60,7 +78,7 @@ library SystemWorkpoint requires SystemMultiboard {
       IsUnitType(u, UNIT_TYPE_STRUCTURE) == false && IsUnitType(u, UNIT_TYPE_ANCIENT) == false &&
       (IsUnitType(u, UNIT_TYPE_HERO) == false) && (IsUnitType(u, UNIT_TYPE_PEON) == false) &&
       (IsUnitType(u, UNIT_TYPE_MELEE_ATTACKER) || IsUnitType(u, UNIT_TYPE_RANGED_ATTACKER))) {
-        UnitUpgradeByTypeId(u, udg_PlayerUnitUpgradeType[lastUpgradePlayerId], 1);
+        UnitUpgradeByTypeId(u, udg_PlayerUnitUpgradeType[lastUpgradePlayerId]);
       }
       GroupRemoveUnit(g, u);
       u = FirstOfGroup(g);
@@ -84,6 +102,22 @@ library SystemWorkpoint requires SystemMultiboard {
     UnitUpgradeUnitTypeId[2] = 'n01D';
     UnitUpgradeUnitTypeId[3] = 'n00L';
     UnitUpgradeUnitTypeId[4] = 'n003';
+    ATK_BUFF[0] = 5;
+    ATK_BUFF[1] = 2;
+    ATK_BUFF[2] = 2;
+    ATK_BUFF[3] = 1;
+    DEF_BUFF[0] = 5;
+    DEF_BUFF[1] = 2;
+    DEF_BUFF[2] = 2;
+    DEF_BUFF[3] = 1;
+    ATKSPD_BUFF[0] = 5;
+    ATKSPD_BUFF[1] = 2;
+    ATKSPD_BUFF[2] = 2;
+    ATKSPD_BUFF[3] = 1;
+    LIFE_BUFF[0] = 50;
+    LIFE_BUFF[1] = 10;
+    LIFE_BUFF[2] = 25;
+    LIFE_BUFF[3] = 5;
     for (0 <= i < 8) {
       for (0 <= j < UpgradeTypeCount) {
         UnitUpgraded[i][j] = 0;
@@ -110,18 +144,8 @@ library SystemWorkpoint requires SystemMultiboard {
 "当前单位升级：\n攻击力：" + I2S(UnitUpgraded[playerId][0]) + "级，升级需要："+I2S(Min(MAX_UPGRADE_WORKPOINT,1+UnitUpgraded[playerId][0]))+ "工分或"+I2S(Min(workpointPrice*(1+UnitUpgraded[playerId][0]),MAX_UPGRADE_GOLD)) + "金币。\n"+
 "防御力：" + I2S(UnitUpgraded[playerId][1]) + "级，升级需要："+I2S(Min(MAX_UPGRADE_WORKPOINT,1+UnitUpgraded[playerId][1]))+ "工分或"+I2S(Min(workpointPrice*(1+UnitUpgraded[playerId][1]),MAX_UPGRADE_GOLD)) + "金币。\n"+
 "攻击速度：" + I2S(UnitUpgraded[playerId][2]) + "级，升级需要："+I2S(Min(MAX_UPGRADE_WORKPOINT,1+UnitUpgraded[playerId][2]))+ "工分或"+I2S(Min(workpointPrice*(1+UnitUpgraded[playerId][2]),MAX_UPGRADE_GOLD)) + "金币。\n"+
-"最大生命值：" + I2S(UnitUpgraded[playerId][3]) + "级，升级需要："+I2S(Min(MAX_UPGRADE_WORKPOINT,1+UnitUpgraded[playerId][3]))+ "工分或"+I2S(Min(workpointPrice*(1+UnitUpgraded[playerId][3]),MAX_UPGRADE_GOLD)) + "金币。");
-  }
-
-  public function UpgradeSummonedUnit(unit u) {
-    integer i = 0;
-    integer playerId = GetPlayerId(GetOwningPlayer(u));
-    for (0 <= i < UpgradeTypeCount) {
-      if (UnitUpgraded[playerId][i] > 0) {
-        UnitUpgradeByTypeId(u, i, UnitUpgraded[playerId][i]);
-      }
-    }
-    u = null;
+"最大生命值：" + I2S(UnitUpgraded[playerId][3]) + "级，升级需要："+I2S(Min(MAX_UPGRADE_WORKPOINT,1+UnitUpgraded[playerId][3]))+ "工分或"+I2S(Min(workpointPrice*(1+UnitUpgraded[playerId][3]),MAX_UPGRADE_GOLD)) + "金币。\n"+
+"可分配属性（一骑当千称号所获得）：" + R2SW(udg_AssignableAttr[playerId],5,1));
   }
 
   public function UpgradeUnit(unit u) {
@@ -129,10 +153,82 @@ library SystemWorkpoint requires SystemMultiboard {
     integer playerId = GetPlayerId(GetOwningPlayer(u));
     for (0 <= i < UpgradeTypeCount) {
       if (UnitUpgraded[playerId][i] > 0) {
-        UnitUpgradeByTypeId(u, i, UnitUpgraded[playerId][i]);
+        UnitUpgradeByTypeId(u, i);
       }
     }
     u = null;
+  }
+
+  public function GetHeroLevelUpAttr(integer beforeLevel, integer nowLevel) -> real {
+    real beginVal = beforeLevel * 0.1;
+    real targVal = (nowLevel-1) * 0.1;
+    return (beginVal + targVal) * (nowLevel - beforeLevel) / 2;
+  }
+
+  function PurchaseMaxAvailableAttr(integer playerId, integer gold, integer attr) -> integer {
+    integer haveGold = GetPlayerState(Player(playerId), PLAYER_STATE_RESOURCE_GOLD);
+    if (haveGold < gold * attr) {
+      attr =  haveGold / gold;
+      if (attr == 0) {
+        DisplayTextToPlayer(Player(playerId), 0, 0, "金币不足。");
+        return attr;
+      }
+    }
+    SetPlayerState(Player(playerId), PLAYER_STATE_RESOURCE_GOLD, haveGold - gold*attr);
+    return attr;
+  }
+
+  function PurchaseAttr(integer playerId, integer whichStat, integer attr) {
+    // 属性价格
+    integer gold = udg_CFG_ATTR_PRICE;
+    integer haveGold = 0;
+    if (attr <= 0) {
+      return;
+    }
+    // 判断用户是否有 AssignableAttr，若有可分配属性值，优先使用免费属性分配。
+    if (udg_AssignableAttr[playerId] >= 1.0) {
+      if (attr > udg_AssignableAttr[playerId]) {
+        attr = R2I(udg_AssignableAttr[playerId]);
+      }
+      udg_AssignableAttr[playerId] = udg_AssignableAttr[playerId] - attr;
+      ModifyHeroStat(whichStat, udg_CurrSelectHero[playerId], bj_MODIFYMETHOD_ADD, attr);
+      DisplayTextToPlayer(Player(playerId), 0, 0, "使用【"+PlayerTitleStr[2]+"】称号效果为|cff66ccff"+GetUnitName(udg_CurrSelectHero[playerId])+"|r分配|cff66ccff"+I2S(attr)+"|r点属性，剩余属性点：|cff66ccff"+R2SW(udg_AssignableAttr[playerId],5,1)+"|r。");
+      return;
+    }
+    // 没有，判断金币是否足够
+    attr = PurchaseMaxAvailableAttr(playerId, gold, attr);
+    if (attr > 0) {
+      ModifyHeroStat(whichStat, udg_CurrSelectHero[playerId], bj_MODIFYMETHOD_ADD, attr);
+      DisplayTextToPlayer(Player(playerId), 0, 0, "已为|cff66ccff"+GetUnitName(udg_CurrSelectHero[playerId])+"|r购买|cff66ccff"+I2S(attr)+"|r点属性。");
+    }
+  }
+
+  public function CodePurchase() {
+    string cstr = GetEventPlayerChatStringMatched();
+    integer attr = S2I(SubString(GetEventPlayerChatString(), 3, 7));
+    integer gold = 0;
+    integer playerId = GetPlayerId(GetTriggerPlayer());
+    if (attr <= 0) {
+      DisplayTextToPlayer(GetTriggerPlayer(), 0, 0, "输入【"+cstr+"100】，购买100点指定属性。(指令：-ll 力|-mj 敏|-zl 智|-dj 等级)");
+      return;
+    }
+    if (cstr == "-dj") {
+      gold = 1500;
+      if (attr > 100 - GetHeroLevel(udg_CurrSelectHero[playerId])) {
+        attr = 100 - GetHeroLevel(udg_CurrSelectHero[playerId]);
+      }
+      attr = PurchaseMaxAvailableAttr(playerId, gold, attr);
+      if (attr > 0) {
+        SetHeroLevel(udg_CurrSelectHero[playerId], (GetHeroLevel(udg_CurrSelectHero[playerId]) + attr), true);
+        DisplayTextToPlayer(Player(playerId), 0, 0, "已为|cff66ccff"+GetUnitName(udg_CurrSelectHero[playerId])+"|r购买|cff66ccff"+I2S(attr)+"|r等级。");
+      }
+    } else if (cstr == "-ll") {
+      PurchaseAttr(playerId, bj_HEROSTAT_STR, attr);
+    } else if (cstr == "-mj") {
+      PurchaseAttr(playerId, bj_HEROSTAT_AGI, attr);
+    } else if (cstr == "-zl") {
+      PurchaseAttr(playerId, bj_HEROSTAT_INT, attr);
+    }
   }
 
   function ExchangeResource(integer playerId, integer diffWorkpoint, playerstate state) {
@@ -141,7 +237,7 @@ library SystemWorkpoint requires SystemMultiboard {
       DisplayTextToPlayer(Player(playerId), 0, 0, "该难度下禁止兑换工分。");
       return;
     }
-    if (diffWorkpoint == 0) {
+    if (diffWorkpoint <= 0) {
       diffWorkpoint = 5;
     }
     if (udg_PlayerWorkPoint[playerId] < diffWorkpoint) {
@@ -177,6 +273,10 @@ library SystemWorkpoint requires SystemMultiboard {
         return;
       }
     } else {
+      if (UnitUpgraded[playerId][typeId] >= 99) {
+        DisplayTextToPlayer(Player(playerId), 0, 0, "["+UpgradeAbilityStr[typeId]+"]最高等级为99级，无法继续升级。");
+        return;
+      }
       diffWorkpoint = 1 + UnitUpgraded[playerId][typeId];
       diffWorkpoint = Min(diffWorkpoint, MAX_UPGRADE_WORKPOINT);
     }

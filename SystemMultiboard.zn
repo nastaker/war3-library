@@ -99,6 +99,7 @@ library SystemMultiboard requires GlobalVar, optional PlatformHelper {
       ColWidth[6] = 0.04;
       totalWidth = 0.38;
       InitPlayerPlatScore();
+      InitPlatQuest();
     } else {
       ColCount = 4;
       ColWidth[0] = 0.12;
