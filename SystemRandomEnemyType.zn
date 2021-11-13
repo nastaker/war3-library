@@ -426,6 +426,18 @@ library SystemRandomEnemyType requires NBonusMod {
     }
   }
 
+  public function StrengthenAggresiveEnemy(unit u) {
+    integer hp =  100 * GetUnitLevel(u) * (udg_RoundIndex+1);
+    integer atkspd = (udg_RoundIndex+1) * GetUnitLevel(u) * 3;
+    integer atk = 10 * GetUnitLevel(u) * (udg_RoundIndex+1);
+    integer armor = GetUnitLevel(u) * (udg_RoundIndex+1);
+    
+    UnitMaxLifeSet(u, R2I(GetUnitState(u, UNIT_STATE_MAX_LIFE)) + hp);
+    UnitAtkSpdAdd(u, atkspd);
+    UnitAtkAdd(u, atk);
+    UnitArmorAdd(u, armor);
+  }
+
   function SpawnEnemy(player p, integer typeid, real x, real y, real face, boolean isStrengthen, boolean isAssassin) -> unit {
     integer hp;
     integer atkspd = R2I(udg_RoundIndex * 5);

@@ -43,18 +43,17 @@ library GamePreparer requires TimerUtils, SystemWorkpoint {
   public function JudgeDifficulty() {
     trigger trg = CreateTrigger();
     integer i;
-    unit u;
     for (1 <= i < DiffCount) {
       if (diffSelectedCount[0] < diffSelectedCount[i]) {
         diffSelectedCount[0] = diffSelectedCount[i];
         udg_CurrDiff = i;
       }
     }
-    u = CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), 'n01A', 300, -3800, 135);
-    TriggerRegisterUnitEvent(trg, u, EVENT_UNIT_SELL);
+    TriggerRegisterUnitEvent(trg, CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), 'n01A', 300, -3800, 135), EVENT_UNIT_SELL);
+    TriggerRegisterUnitEvent(trg, CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), 'nbks', -4096, -1792, 135), EVENT_UNIT_SELL);
+    TriggerRegisterUnitEvent(trg, CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), 'nbks', 4096, -1792, 135), EVENT_UNIT_SELL);
     TriggerAddAction(trg, function SellUnit);
     DisplayTimedTextToForce(udg_PlayerForce, 90.00, "已选择难度：" + udg_DiffStr[udg_CurrDiff]);
-    u = null;
     trg = null;
   }
 

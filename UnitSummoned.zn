@@ -1,4 +1,4 @@
-library UnitSummoned requires NBonusMod {
+library UnitSummoned requires NBonusMod, SystemWorkpoint {
 
   integer summonedUnitAbility = 'A02E';
   
@@ -15,10 +15,10 @@ library UnitSummoned requires NBonusMod {
       return;
     }
     x = GetUnitLevel(summon)*(GetHeroLevel(hero) * 0.01);
-    atk = R2I(GetHeroInt(hero,false) * (0.5+0.10*x));
+    atk = R2I(GetHeroInt(hero,false) * (0.5+0.0625*x));
     atkspd =  GetHeroLevel(hero);
     hp = R2I(GetHeroStr(hero,false) * (1+x));
-    armor = R2I(GetHeroAgi(hero,false) * (0.30 + 0.015 * x));
+    armor = R2I(GetHeroAgi(hero,false) * (0.10 + 0.015 * x));
     if(GetUnitTypeId(summon) == 'ndr1' || GetUnitTypeId(summon) == 'ndr2' || GetUnitTypeId(summon) == 'ndr3' || GetUnitTypeId(summon) == 'n00F' || GetUnitTypeId(summon) == 'n00G') {
       atk = R2I(atk * 0.5);
       hp = R2I(hp * 0.5);
@@ -68,6 +68,7 @@ library UnitSummoned requires NBonusMod {
     }
 
     UnitSummoned(hero, summon);
+    UpgradeUnit(summon);
   }
 
   function onInit() {

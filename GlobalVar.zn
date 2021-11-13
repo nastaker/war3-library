@@ -3,13 +3,24 @@ library GlobalVar {
   public {
     string qqgroup = "39055594";
     string author = "Nastaker";
-    string date = "2021/04/29";
-    string ver = "1.27a4";
-    string ROUND_SETTING = "180,80,100,2,8,1,0.5,24,0,0,0,0,0,0,300;150,70,80,1,8,2,0.5,28,5,5,3,5,0,0,300;120,50,60,1,8,3,0.5,32,10,10,5,10,17440,50,300;100,40,40,0,8,4,0.5,36,15,15,9,15,43296,100,400;";
-    string ENEMY_SETTING = "0.5,5,1,10,3,1,200,50,1,1,0,0,0.5;1,5,1.01,20,4,1,200,60,1,2,0,0,0.5;2,5,1.02,35,5,1,200,70,1,2,0,0,0.5;3,5,1.03,50,6,1,200,100,1,2,0,0,0.5;";
+    string date = "2021/08/01";
+    string ver = "1.275";
+    string ROUND_SETTING = "180,80,100,2,8,1,0.5,24,0,0,0,0,0,0,300;150,70,80,1,8,2,0.5,28,5,5,5,5,17440,0,300;120,50,60,1,8,3,0.5,32,10,10,5,10,17440,50,300;100,40,40,0,8,4,0.5,36,15,15,9,15,43296,100,300;";
+    string ENEMY_SETTING = "0.5,5,1,0,5,1,200,25,1.03,1,0,0,1;0.7,5,1.01,10,5,1.01,210,25,1.04,2,0,0,1;1,5,1.02,15,5,1.02,220,25,1.05,2,0,0,1;1.5,5,1.03,20,5,1.05,240,25,1.07,2,0,0,1;";
+
+    integer WORKPOINT_SUPPLY = 5;
+    integer MAX_UPGRADE_WORKPOINT = 20;
+    integer GAP_PER_LEVEL = 5;
+    integer WORKPOINT_UPGRADE_PRICE = 1000;
+    integer LEVEL_PRICE = 1500;
 
     string PlayerTitleStr[];
     integer WINGIDS[];
+
+    integer ATK_UPGRADE_RATIO[];
+    integer DEF_UPGRADE_RATIO[];
+    integer ATKSPD_UPGRADE_RATIO[];
+    integer LIFE_UPGRADE_RATIO[];
 
     
     integer MaxJF = 255;
@@ -29,153 +40,181 @@ library GlobalVar {
       udg_CFG_ATTR_PRICE = S2I(YDWERPGGetMapConfig("ATTR_PRICE"));
       udg_CFG_BOOK_ENABLE = S2I(YDWERPGGetMapConfig("BOOK_ENABLE"));
       udg_CFG_EXCHANGE_ENABLE = S2I(YDWERPGGetMapConfig("EXCHANGE_ENABLE"));
+      WORKPOINT_SUPPLY = S2I(YDWERPGGetMapConfig("WORKPOINT_SUPPLY"));
+      MAX_UPGRADE_WORKPOINT = S2I(YDWERPGGetMapConfig("MAX_UPGRADE_WORKPOINT"));
+      WORKPOINT_UPGRADE_PRICE = S2I(YDWERPGGetMapConfig("WORKPOINT_UPGRADE_PRICE"));
+      LEVEL_PRICE = S2I(YDWERPGGetMapConfig("LEVEL_PRICE"));
     }
+  }
 
-    function LoadRoundSettings() {
-      integer i, typeIndex = 0, startIndex = 0, diffIndex = 0;
-      integer len = 0;
-      string valueStr, char;
-      for (0 <= i < StringLength(ROUND_SETTING)) {
-        char = SubString(ROUND_SETTING, i, i+1);
-        if (diffIndex == udg_CurrDiff && (char == "," || char == ";")) {
-          // 读取当前难度的配置
-          valueStr = SubString(ROUND_SETTING, startIndex, len);
-          if (typeIndex == 0) {
-            // 准备时间：
-            udg_FirstAttackTime = S2R(valueStr);
-          } else if (typeIndex == 1) {
-            // 进攻间隔：
-            udg_AttackTime = S2R(valueStr);
-          } else if (typeIndex == 2) {
-            // 最大间隔：
-            udg_MaxAttackTime = S2R(valueStr);
-          } else if (typeIndex == 3) {
-            // 增加间隔：
-            udg_AttackTimeAdd = S2R(valueStr);
-          } else if (typeIndex == 4) {
-            // 刷怪间隔：
-            udg_SpawnTimeSpan = S2R(valueStr);
-          } else if (typeIndex == 5) {
-            // 每轮波数：
-            udg_WaveCount = S2I(valueStr);
-          } else if (typeIndex == 6) {
-            // 波数间隔系数：
-            udg_AttackTimeRatio = S2R(valueStr);
-          } else if (typeIndex == 7) {
-            // 刷怪方式：
-            udg_SpawnColumn = 4;
-            udg_SpawnRow = S2I(valueStr) / udg_SpawnColumn;
-          } else if (typeIndex == 8) {
-            // 精英怪比例(1-100随机，小于等于此值为精英)：
-            udg_EliteRatio = S2I(valueStr);
-          } else if (typeIndex == 9) {
-            // 精英怪每轮最高数量：
-            udg_EliteMaxCount = S2I(valueStr);
-          } else if (typeIndex == 10) {
-            // 偷袭波数：
-            udg_StrikeWaveCount = S2I(valueStr);
-          } else if (typeIndex == 11) {
-            // 偷袭刷怪间隔：
-            udg_StrikeTimeSpan = S2R(valueStr);
-          } else if (typeIndex == 12) {
-            // 偷袭于哪几轮(2进制存储方式，用haveBinary检查)：
-            udg_StrikeWaveBinary = S2I(valueStr);
-          } else if (typeIndex == 13) {
-            // 偷袭隐形概率(1-100随机，小于等于此值时隐形)：
-            udg_StrikeInvProb = S2I(valueStr);
-          } else if (typeIndex == 14) {
-            // 最大敌人数量
-            udg_MaxEnemyCount = S2I(valueStr);
-          }
-          startIndex = i+1;
-          typeIndex = typeIndex + 1;
+  function LoadRoundSettings() {
+    integer i, typeIndex = 0, startIndex = 0, diffIndex = 0;
+    integer len = 0;
+    string valueStr, char;
+    for (0 <= i < StringLength(ROUND_SETTING)) {
+      char = SubString(ROUND_SETTING, i, i+1);
+      if (diffIndex == udg_CurrDiff && (char == "," || char == ";")) {
+        // 读取当前难度的配置
+        valueStr = SubString(ROUND_SETTING, startIndex, len);
+        if (typeIndex == 0) {
+          // 准备时间：
+          udg_FirstAttackTime = S2R(valueStr);
+        } else if (typeIndex == 1) {
+          // 进攻间隔：
+          udg_AttackTime = S2R(valueStr);
+        } else if (typeIndex == 2) {
+          // 最大间隔：
+          udg_MaxAttackTime = S2R(valueStr);
+        } else if (typeIndex == 3) {
+          // 增加间隔：
+          udg_AttackTimeAdd = S2R(valueStr);
+        } else if (typeIndex == 4) {
+          // 刷怪间隔：
+          udg_SpawnTimeSpan = S2R(valueStr);
+        } else if (typeIndex == 5) {
+          // 每轮波数：
+          udg_WaveCount = S2I(valueStr);
+        } else if (typeIndex == 6) {
+          // 波数间隔系数：
+          udg_AttackTimeRatio = S2R(valueStr);
+        } else if (typeIndex == 7) {
+          // 刷怪方式：
+          udg_SpawnColumn = 4;
+          udg_SpawnRow = S2I(valueStr) / udg_SpawnColumn;
+        } else if (typeIndex == 8) {
+          // 精英怪比例(1-100随机，小于等于此值为精英)：
+          udg_EliteRatio = S2I(valueStr);
+        } else if (typeIndex == 9) {
+          // 精英怪每轮最高数量：
+          udg_EliteMaxCount = S2I(valueStr);
+        } else if (typeIndex == 10) {
+          // 偷袭波数：
+          udg_StrikeWaveCount = S2I(valueStr);
+        } else if (typeIndex == 11) {
+          // 偷袭刷怪间隔：
+          udg_StrikeTimeSpan = S2R(valueStr);
+        } else if (typeIndex == 12) {
+          // 偷袭于哪几轮(2进制存储方式，用haveBinary检查)：
+          udg_StrikeWaveBinary = S2I(valueStr);
+        } else if (typeIndex == 13) {
+          // 偷袭隐形概率(1-100随机，小于等于此值时隐形)：
+          udg_StrikeInvProb = S2I(valueStr);
+        } else if (typeIndex == 14) {
+          // 最大敌人数量
+          udg_MaxEnemyCount = S2I(valueStr);
         }
-
-        if (char == ";") {
-          if (typeIndex > 0) {
-            // 已经读取，直接退出
-            return;
-          }
-          // 开启下一个难度的读取
-          diffIndex = diffIndex + 1;
-          startIndex = i+1;
-          typeIndex = 0;
-        }
-        len = len + 1;
+        startIndex = i+1;
+        typeIndex = typeIndex + 1;
       }
-    }
 
-    
-
-    function LoadEnemySettings() {
-      integer i, typeIndex = 0, startIndex = 0, diffIndex = 0;
-      integer len = 0;
-      string valueStr, char;
-      for (0 <= i < StringLength(ENEMY_SETTING)) {
-        char = SubString(ENEMY_SETTING, i, i+1);
-        if (diffIndex == udg_CurrDiff && (char == "," || char == ";")) {
-          // 读取当前难度的配置
-          valueStr = SubString(ENEMY_SETTING, startIndex, len);
-          if (typeIndex == 0) {
-            // 攻击加成系数：
-            udg_EnemyAttackRatio = S2R(valueStr);
-          } else if (typeIndex == 1) {
-            // 攻击力：
-            udg_EnemyAttack = S2I(valueStr);
-          } else if (typeIndex == 2) {
-            // 攻击成长系数：
-            udg_EnemyAttackGrowRatio = S2R(valueStr);
-          } else if (typeIndex == 3) {
-            // 基础防御力：
-            udg_EnemyDefBase = S2I(valueStr);
-          } else if (typeIndex == 4) {
-            // 防御力：
-            udg_EnemyDef = S2I(valueStr);
-          } else if (typeIndex == 5) {
-            // 防御成长系数：
-            udg_EnemyDefGrowRatio = S2R(valueStr);
-          } else if (typeIndex == 6) {
-            // 基础生命值：
-            udg_EnemyHPBase = S2I(valueStr);
-          } else if (typeIndex == 7) {
-            // 生命值：
-            udg_EnemyHP = S2I(valueStr);
-          } else if (typeIndex == 8) {
-            // 生命成长系数：
-            udg_EnemyHPGrowRatio = S2R(valueStr);
-          } else if (typeIndex == 9) {
-            // 精英怪强化系数
-            udg_EliteStrengthenRatio = S2R(valueStr);
-          } else if (typeIndex == 10) {
-            // BOSS额外生命值
-            udg_LeaderHPExtra = S2I(valueStr);
-          } else if (typeIndex == 11) {
-            // BOSS生命值成长系数
-            udg_LeaderHPGrowRatio = S2R(valueStr);
-          } else if (typeIndex == 12) {
-            // 敌人飞行单位加成系数
-            udg_EnemyFlyingAttrRatio = S2R(valueStr);
-          }
-          startIndex = i+1;
-          typeIndex = typeIndex + 1;
+      if (char == ";") {
+        if (typeIndex > 0) {
+          // 已经读取，直接退出
+          return;
         }
-
-        if (char == ";") {
-          if (typeIndex > 0) {
-            // 已经读取，直接退出
-            return;
-          }
-          // 开启下一个难度的读取
-          diffIndex = diffIndex + 1;
-          startIndex = i+1;
-          typeIndex = 0;
-        }
-        len = len + 1;
+        // 开启下一个难度的读取
+        diffIndex = diffIndex + 1;
+        startIndex = i+1;
+        typeIndex = 0;
       }
+      len = len + 1;
     }
   }
 
   
+
+  function LoadEnemySettings() {
+    integer i, typeIndex = 0, startIndex = 0, diffIndex = 0;
+    integer len = 0;
+    string valueStr, char;
+    for (0 <= i < StringLength(ENEMY_SETTING)) {
+      char = SubString(ENEMY_SETTING, i, i+1);
+      if (diffIndex == udg_CurrDiff && (char == "," || char == ";")) {
+        // 读取当前难度的配置
+        valueStr = SubString(ENEMY_SETTING, startIndex, len);
+        if (typeIndex == 0) {
+          // 攻击加成系数：
+          udg_EnemyAttackRatio = S2R(valueStr);
+        } else if (typeIndex == 1) {
+          // 攻击力：
+          udg_EnemyAttack = S2I(valueStr);
+        } else if (typeIndex == 2) {
+          // 攻击成长系数：
+          udg_EnemyAttackGrowRatio = S2R(valueStr);
+        } else if (typeIndex == 3) {
+          // 基础防御力：
+          udg_EnemyDefBase = S2I(valueStr);
+        } else if (typeIndex == 4) {
+          // 防御力：
+          udg_EnemyDef = S2I(valueStr);
+        } else if (typeIndex == 5) {
+          // 防御成长系数：
+          udg_EnemyDefGrowRatio = S2R(valueStr);
+        } else if (typeIndex == 6) {
+          // 基础生命值：
+          udg_EnemyHPBase = S2I(valueStr);
+        } else if (typeIndex == 7) {
+          // 生命值：
+          udg_EnemyHP = S2I(valueStr);
+        } else if (typeIndex == 8) {
+          // 生命成长系数：
+          udg_EnemyHPGrowRatio = S2R(valueStr);
+        } else if (typeIndex == 9) {
+          // 精英怪强化系数
+          udg_EliteStrengthenRatio = S2R(valueStr);
+        } else if (typeIndex == 10) {
+          // BOSS额外生命值
+          udg_LeaderHPExtra = S2I(valueStr);
+        } else if (typeIndex == 11) {
+          // BOSS生命值成长系数
+          udg_LeaderHPGrowRatio = S2R(valueStr);
+        } else if (typeIndex == 12) {
+          // 敌人飞行单位加成系数
+          udg_EnemyFlyingAttrRatio = S2R(valueStr);
+        }
+        startIndex = i+1;
+        typeIndex = typeIndex + 1;
+      }
+
+      if (char == ";") {
+        if (typeIndex > 0) {
+          // 已经读取，直接退出
+          return;
+        }
+        // 开启下一个难度的读取
+        diffIndex = diffIndex + 1;
+        startIndex = i+1;
+        typeIndex = 0;
+      }
+      len = len + 1;
+    }
+  }
+  
+
+  public function LoadSettings() {
+    LoadRoundSettings();
+    LoadEnemySettings();
+  }
+
+  function InitUnitUpgradeRatio() {
+    ATK_UPGRADE_RATIO[0] = 4; // 攻击力近战
+    ATK_UPGRADE_RATIO[1] = 2; // 攻击力远程
+    ATK_UPGRADE_RATIO[2] = 2; // 攻击力近战召唤
+    ATK_UPGRADE_RATIO[3] = 1; // 攻击力远程召唤
+    DEF_UPGRADE_RATIO[0] = 4; // 防御力近战
+    DEF_UPGRADE_RATIO[1] = 2; // 防御力远程
+    DEF_UPGRADE_RATIO[2] = 2; // 防御力近战召唤
+    DEF_UPGRADE_RATIO[3] = 1; // 防御力远程召唤
+    ATKSPD_UPGRADE_RATIO[0] = 2; // 攻速近战
+    ATKSPD_UPGRADE_RATIO[1] = 1; // 攻速远程
+    ATKSPD_UPGRADE_RATIO[2] = 1; // 攻速近战召唤
+    ATKSPD_UPGRADE_RATIO[3] = 1; // 攻速远程召唤
+    LIFE_UPGRADE_RATIO[0] = 25; // 生命值近战
+    LIFE_UPGRADE_RATIO[1] = 15; // 生命值远程
+    LIFE_UPGRADE_RATIO[2] = 15; // 生命值近战召唤
+    LIFE_UPGRADE_RATIO[3] = 5; // 生命值远程召唤
+  }
+
   function InitWingIds() {
     WINGIDS[0] = 'A00M';
     WINGIDS[1] = 'A00N';
@@ -199,5 +238,6 @@ library GlobalVar {
   function onInit() {
     InitWingIds();
     InitPlayerTitleStr();
+    InitUnitUpgradeRatio();
   }
 }
