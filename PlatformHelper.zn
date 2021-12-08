@@ -28,6 +28,9 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
     integer PlayerGameCount[];
     integer PlayerScoreBefore[];
     integer PlayerScore[];
+    integer PlayerGeneralLevel[];
+    integer PlayerUnitKills[];
+    integer IssuedSource[];
     integer PlayerTitles[];
     integer PlayerTitleCurr[];
 
@@ -125,18 +128,29 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
           PlayerTitles[i] = YDWERPGGetKey(Player(i), "c+1023");
           PlayerTitleCurr[i] = YDWERPGGetKey(Player(i), "ch");
           PlayerScoreBefore[i] = YDWERPGGetKey(Player(i), "a+233");
+          // 玩家将军等级
+          PlayerGeneralLevel[i] = YDWERPGGetKey(Player(i), "jj");
+          // 玩家单位杀敌数
+          PlayerUnitKills[i] = YDWERPGGetKey(Player(i), "dwsd");
+          udg_UnitKills[i] = PlayerUnitKills[i];
           PlayerScore[i] = YDWERPGGetKey(Player(i), "jf");
-          PlayerWinStreak[i] = YDWERPGGetKey(Player(i), "ws"+I2S(udg_CurrDiff));
-          PlayerWinCount[i] = YDWERPGGetKey(Player(i), "wc"+I2S(udg_CurrDiff));
+          // 已发放资源，初始化为0
+          IssuedSource[i] = PlayerScore[i];
+          PlayerWinStreak[i] = YDWERPGGetKey(Player(i), "ws"+I2S(udg_CurrDiff+1));
+          PlayerWinCount[i] = YDWERPGGetKey(Player(i), "wc"+I2S(udg_CurrDiff+1));
           udg_PlayerTitleApply[i] = PlayerTitleCurr[i];
           // 默认设置连胜数清零，结束后若胜利则+1
-          YDWERPGSetKey(Player(i), "ws"+I2S(udg_CurrDiff), 0);
+          YDWERPGSetKey(Player(i), "ws"+I2S(udg_CurrDiff+1), 0);
           // 若jf小于a+233，迁移数据
           if (PlayerScore[i] < PlayerScoreBefore[i]) {
             PlayerScore[i] = PlayerScoreBefore[i];
             YDWERPGSetKey(Player(i), "jf", PlayerScore[i]);
           }
-          gold = GetPlayerState(Player(i), PLAYER_STATE_RESOURCE_GOLD) + PlayerScore[i];
+          // 若玩家单位击杀等于0，则将积分*0.03后转为击杀数量
+          if (udg_UnitKills[i] == 0) {
+            udg_UnitKills[i] = R2I(PlayerScore[i] * 0.03);
+          }
+          gold = GetPlayerState(Player(i), PLAYER_STATE_RESOURCE_GOLD);
           lumber = GetPlayerState(Player(i), PLAYER_STATE_RESOURCE_LUMBER);
           //
           if (YDWERPGBillingHasStatus(Player(i), "20010779")) {
@@ -159,7 +173,6 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
           }
           SetPlayerState(Player(i), PLAYER_STATE_RESOURCE_GOLD, gold);
           SetPlayerState(Player(i), PLAYER_STATE_RESOURCE_LUMBER, lumber);
-          DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, "|cffffcc00你的积分已转换为本局额外金币，由积分获得的额外金币："+I2S(PlayerScore[i])+"|r");
         }
       }
     }
@@ -178,8 +191,49 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
       YDWERPGAddKey(p, "jf", score);
     }
 
-    function GetPlayerTitle(integer playerid) -> string {
-      return PlayerTitleStr[PlayerTitleCurr[playerid]];
+    function AddPlayerUnitKills(player p) {
+      // 默认不限制杀敌数
+      integer playerId = GetPlayerId(p);
+      integer maxKills = MAX_KILL_COUNT;
+      // 判断当前难度，难度对应杀敌数积累上限
+      if (udg_CurrDiff == 0) {
+        // 普通杀敌上限3000；超过不计算杀敌
+        maxKills = 3000;
+      } else if (udg_CurrDiff == 1) {
+        // 困难杀敌上限14400；超过不计算杀敌
+        maxKills = 14400;
+      }
+      // 如果杀敌数超过累积上限，但是之前保存的没有超过，将之前保存的杀敌数修改为上限
+      if (udg_UnitKills[playerId] > maxKills){
+        if (PlayerUnitKills[playerId] > maxKills) {
+          return;
+        }
+        PlayerUnitKills[playerId] = maxKills;
+      } else {
+        PlayerUnitKills[playerId] = udg_UnitKills[playerId];
+      }
+      YDWERPGSetKey(p, "dwsd", PlayerUnitKills[playerId]);
+    }
+
+    function GetPlayerTitle(integer playerId) -> string {
+      if (PlayerTitleCurr[playerId] == 9) {
+        return GeneralTitleStr[PlayerGeneralLevel[playerId]];
+      }
+      return PlayerTitleStr[PlayerTitleCurr[playerId]];
+    }
+
+    // 判断是否获得将军升级
+    function GivePlayerGeneralTitle(player p){
+      if (PlayerGeneralLevel[GetPlayerId(p)] < 17 && udg_UnitKills[GetPlayerId(p)] >= GeneralUpgradeNeedKills[PlayerGeneralLevel[GetPlayerId(p)] + 1]) {
+        PlayerGeneralLevel[GetPlayerId(p)] = PlayerGeneralLevel[GetPlayerId(p)] + 1;
+        YDWERPGSetKey(p, "jj", PlayerGeneralLevel[GetPlayerId(p)]);
+        AddPlayerUnitKills(p);
+        DisplayTimedTextToForce(udg_PlayerForce, 30.0, "玩家"+YDWEGetPlayerColorString(p, GetPlayerName(p))+"率部杀敌，授予官职"+GeneralTitleStr[PlayerGeneralLevel[GetPlayerId(p)]]+"！所率将士获得士气提升！" );
+        if (havebinary(PlayerTitles[GetPlayerId(p)], 8)) {
+          return;
+        }
+        SetPlayerTitle(p, 9);
+      }
     }
 
     function GivePlayerThousandKillTitle(player p) {
@@ -187,7 +241,7 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
       if (havebinary(PlayerTitles[playerId], 1)) {
         return;
       }
-      DisplayTimedTextToForce(udg_PlayerForce, 30.0, "玩家"+GetPlayerName(p)+"奋勇杀敌，获得称号"+PlayerTitleStr[2]+"！\n称号效果：英雄升级时额外获得可分配属性点。\n下次进入游戏时生效。" );
+      DisplayTimedTextToForce(udg_PlayerForce, 30.0, "玩家"+YDWEGetPlayerColorString(p, GetPlayerName(p))+"奋勇杀敌，获得称号"+PlayerTitleStr[2]+"！\n称号效果：英雄升级时额外获得可分配属性点。\n下次进入游戏时生效。" );
       SetPlayerTitle(p, 2);
     }
 
@@ -212,7 +266,7 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
       if (havebinary(PlayerTitles[playerId], 7)) {
         return;
       }
-      DisplayTimedTextToForce(udg_PlayerForce, 30.0, "玩家"+GetPlayerName(p)+"建筑技巧娴熟，获得称号"+PlayerTitleStr[8]+"！\n称号效果：建筑建造、升级速度提升80%。\n下次进入游戏时生效。" );
+      DisplayTimedTextToForce(udg_PlayerForce, 30.0, "玩家"+YDWEGetPlayerColorString(p, GetPlayerName(p))+"建筑技巧娴熟，获得称号"+PlayerTitleStr[8]+"！\n称号效果：建筑建造、升级速度提升80%。\n下次进入游戏时生效。" );
       SetPlayerTitle(p, 8);
     }
 
@@ -227,31 +281,32 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
         if (GetPlayerController(Player(i))==MAP_CONTROL_USER && GetPlayerSlotState(Player(i)) == PLAYER_SLOT_STATE_PLAYING) {
           if (winorlose == 1) {
             // 完胜
-            YDWERPGSetKey(Player(i), "ws"+I2S(udg_CurrDiff), PlayerWinStreak[i]+winorlose);
-            YDWERPGSetKey(Player(i), "wc"+I2S(udg_CurrDiff), PlayerWinCount[i]+winorlose);
-            AddPlayerPlatScore(Player(i), 50*udg_CurrDiff);
-            // 如果是专家难度，杀敌大于1000
-            if (udg_CurrDiff == 2) {
+            YDWERPGSetKey(Player(i), "ws"+I2S(udg_CurrDiff+1), PlayerWinStreak[i]+winorlose);
+            YDWERPGSetKey(Player(i), "wc"+I2S(udg_CurrDiff+1), PlayerWinCount[i]+winorlose);
+            AddPlayerPlatScore(Player(i), 50*(udg_CurrDiff+1));
+            if (udg_CurrDiff == 1) {
               // 如果是困难难度
               playernames = playernames + YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "，";
               GivePlayerHardTitle(Player(i));
             }
-            if (udg_CurrDiff == 3 && udg_Kills[i] >= 1000) {
+            if (udg_CurrDiff == 2 && udg_Kills[i] >= 1000) {
+              // 如果是专家难度，杀敌大于1000
               playernames = playernames + YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "，";
               GivePlayerProfesstionalTitle(Player(i));
             }
           } else {
             // 其他情况连胜清空
-            YDWERPGSetKey(Player(i), "ws"+I2S(udg_CurrDiff), 0);
+            YDWERPGSetKey(Player(i), "ws"+I2S(udg_CurrDiff+1), 0);
           }
         }
       }
-      if (udg_CurrDiff == 2 && winorlose == 1) {
+      if (udg_CurrDiff == 1 && winorlose == 1) {
         DisplayTimedTextToForce(udg_PlayerForce, 30.0, playernames + "挑战了自我，获得"+PlayerTitleStr[4]+"称号。");
-      } else if (udg_CurrDiff == 3 && winorlose == 1) {
-        DisplayTimedTextToForce(udg_PlayerForce, 30.0, "恭喜你们，超越了自我，创造了奇迹！");
+      } else if (udg_CurrDiff == 2 && winorlose == 1) {
         DisplayTimedTextToForce(udg_PlayerForce, 30.0, "鉴于玩家" + playernames + "所作出的突出贡献，授予"+PlayerTitleStr[3]+"称号！");
-      } 
+      } else if (udg_CurrDiff == 3 && winorlose == 1) {
+        DisplayTimedTextToForce(udg_PlayerForce, 30.0, "恭喜你们，超越了自我，创造了奇迹！"+udg_DiffStr[udg_CurrDiff]+"难度通关！");
+      }
     }
   }
 

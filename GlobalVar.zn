@@ -3,18 +3,23 @@ library GlobalVar {
   public {
     string qqgroup = "39055594";
     string author = "Nastaker";
-    string date = "2021/08/01";
-    string ver = "1.275";
-    string ROUND_SETTING = "180,80,100,2,8,1,0.5,24,0,0,0,0,0,0,300;150,70,80,1,8,2,0.5,28,5,5,5,5,17440,0,300;120,50,60,1,8,3,0.5,32,10,10,5,10,17440,50,300;100,40,40,0,8,4,0.5,36,15,15,9,15,43296,100,300;";
-    string ENEMY_SETTING = "0.5,5,1,0,5,1,200,25,1.03,1,0,0,1;0.7,5,1.01,10,5,1.01,210,25,1.04,2,0,0,1;1,5,1.02,15,5,1.02,220,25,1.05,2,0,0,1;1.5,5,1.03,20,5,1.05,240,25,1.07,2,0,0,1;";
+    string date = "2021/12/06";
+    string ver = "1.282";
+    string ROUND_SETTING = "180,70,80,1,8,2,0.5,28,5,5,5,5,17440,0,300;150,50,60,1,8,3,0.5,32,10,10,5,10,17440,25,300;120,40,50,1,8,4,0.5,36,15,15,9,15,43296,75,300;100,40,40,0,8,5,0.5,36,20,20,9,20,43296,100,300;";
+    string ENEMY_SETTING = "0.7,5,1.01,10,5,1.01,210,25,1.04,2,0,0,1;1,5,1.02,15,5,1.02,220,25,1.05,2,0,0,1;1.5,5,1.03,20,5,1.05,240,25,1.07,2,0,0,1;2,5,1.05,30,5,1.1,280,25,1.1,2,0,0,1;";
 
     integer WORKPOINT_SUPPLY = 5;
     integer MAX_UPGRADE_WORKPOINT = 20;
     integer GAP_PER_LEVEL = 5;
     integer WORKPOINT_UPGRADE_PRICE = 1000;
     integer LEVEL_PRICE = 1500;
+    real GENERAL_INCREASE_RATIO = 0.10;
+    integer ISSUE_SOURCE_AMOUNT = 4000;
+    integer MAX_KILL_COUNT = 99999999;
 
     string PlayerTitleStr[];
+    string GeneralTitleStr[];
+    integer GeneralUpgradeNeedKills[];
     integer WINGIDS[];
 
     integer ATK_UPGRADE_RATIO[];
@@ -22,8 +27,8 @@ library GlobalVar {
     integer ATKSPD_UPGRADE_RATIO[];
     integer LIFE_UPGRADE_RATIO[];
 
-    
-    integer MaxJF = 255;
+    integer MaxJF = 305;
+
     gamecache ctable = InitGameCache("11.s");
 
     function YDWERPGGetMapConfig(string ckey) -> string {
@@ -31,9 +36,55 @@ library GlobalVar {
     }
 
     function GetPlatConfig() {
+      string tmp = "";
       if (ver != YDWERPGGetMapConfig("VERSION")) {
         return;
       }
+      tmp = YDWERPGGetMapConfig("ROUND_SETTING");
+      if (tmp != null && tmp != "") {
+        ROUND_SETTING = tmp;
+      }
+      tmp = YDWERPGGetMapConfig("ENEMY_SETTING");
+      if (tmp != null && tmp != "") {
+        ENEMY_SETTING = tmp;
+      }
+      tmp = YDWERPGGetMapConfig("WORKPOINT_PRICE");
+      if (tmp != null && tmp != "") {
+        udg_CFG_WORKPOINT_PRICE = S2I(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("ATTR_PRICE");
+      if (tmp != null && tmp != "") {
+        udg_CFG_ATTR_PRICE = S2I(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("BOOK_ENABLE");
+      if (tmp != null && tmp != "") {
+        udg_CFG_BOOK_ENABLE = S2I(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("EXCHANGE_ENABLE");
+      if (tmp != null && tmp != "") {
+        udg_CFG_EXCHANGE_ENABLE = S2I(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("WORKPOINT_SUPPLY");
+      if (tmp != null && tmp != "") {
+        WORKPOINT_SUPPLY = S2I(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("MAX_UPGRADE_WORKPOINT");
+      if (tmp != null && tmp != "") {
+        udg_CFG_WORKPOINT_PRICE = S2I(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("WORKPOINT_UPGRADE_PRICE");
+      if (tmp != null && tmp != "") {
+        WORKPOINT_UPGRADE_PRICE = S2I(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("LEVEL_PRICE");
+      if (tmp != null && tmp != "") {
+        LEVEL_PRICE = S2I(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("GENERAL_INCREASE_RATIO");
+      if (tmp != null && tmp != "") {
+        GENERAL_INCREASE_RATIO = S2R(tmp);
+      }
+      /*
       ROUND_SETTING = YDWERPGGetMapConfig("ROUND_SETTING");
       ENEMY_SETTING = YDWERPGGetMapConfig("ENEMY_SETTING");
       udg_CFG_WORKPOINT_PRICE = S2I(YDWERPGGetMapConfig("WORKPOINT_PRICE"));
@@ -44,6 +95,8 @@ library GlobalVar {
       MAX_UPGRADE_WORKPOINT = S2I(YDWERPGGetMapConfig("MAX_UPGRADE_WORKPOINT"));
       WORKPOINT_UPGRADE_PRICE = S2I(YDWERPGGetMapConfig("WORKPOINT_UPGRADE_PRICE"));
       LEVEL_PRICE = S2I(YDWERPGGetMapConfig("LEVEL_PRICE"));
+      GENERAL_INCREASE_RATIO = S2R(YDWERPGGetMapConfig("GENERAL_INCREASE_RATIO"));
+      */
     }
   }
 
@@ -233,11 +286,55 @@ library GlobalVar {
     PlayerTitleStr[6] = "|cffffcc00战无不胜|r";
     PlayerTitleStr[7] = "|cff39C5BB测试员|r";
     PlayerTitleStr[8] = "|cffff9900建筑师|r";
+    PlayerTitleStr[9] = "|cffff3333将军|r";
+  }
+
+  function InitGeneralTitleStr() {
+    GeneralTitleStr[0] = "无";
+    GeneralTitleStr[1] = "|cffDE7062游骑将军|r";
+    GeneralTitleStr[2] = "|cffE08058宁远将军|r";
+    GeneralTitleStr[3] = "|cffE18853定远将军|r";
+    GeneralTitleStr[4] = "|cffE2904E明威将军|r";
+    GeneralTitleStr[5] = "|cffE39849宣威将军|r";
+    GeneralTitleStr[6] = "|cffaa20a3壮武将军|r";
+    GeneralTitleStr[7] = "|cffb72dc4忠武将军|r";
+    GeneralTitleStr[8] = "|cffcc2ecc归德将军|r";
+    GeneralTitleStr[9] = "|cffba10c0云麾将军|r";
+    GeneralTitleStr[10] = "|cffad19bb怀化将军|r";
+    GeneralTitleStr[11] = "|cff952eaa冠军大将军|r";
+    GeneralTitleStr[12] = "|cffbe25c4镇军大将军|r";
+    GeneralTitleStr[13] = "|cffa126c0辅国大将军|r";
+    GeneralTitleStr[14] = "|cffa120b3骠骑大将军|r";
+    GeneralTitleStr[15] = "|cff7814bb车骑将军|r";
+    GeneralTitleStr[16] = "|cffeeee00卫将军|r";
+    GeneralTitleStr[17] = "|cffffff00镇将军|r";
+    GeneralTitleStr[18] = "|cffffff00镇将军|r";
+
+    GeneralUpgradeNeedKills[0] = 0;
+    GeneralUpgradeNeedKills[1] = 100;
+    GeneralUpgradeNeedKills[2] = 200;
+    GeneralUpgradeNeedKills[3] = 300;
+    GeneralUpgradeNeedKills[4] = 500;
+    GeneralUpgradeNeedKills[5] = 800;
+    GeneralUpgradeNeedKills[6] = 1300;
+    GeneralUpgradeNeedKills[7] = 2100;
+    GeneralUpgradeNeedKills[8] = 3400;
+    GeneralUpgradeNeedKills[9] = 5500;
+    GeneralUpgradeNeedKills[10] = 8900;
+    GeneralUpgradeNeedKills[11] = 14400;
+    GeneralUpgradeNeedKills[12] = 23300;
+    GeneralUpgradeNeedKills[13] = 37700;
+    GeneralUpgradeNeedKills[14] = 61000;
+    GeneralUpgradeNeedKills[15] = 98700;
+    GeneralUpgradeNeedKills[16] = 159700;
+    GeneralUpgradeNeedKills[17] = 258400;
+    GeneralUpgradeNeedKills[18] = 0;
   }
 
   function onInit() {
     InitWingIds();
     InitPlayerTitleStr();
+    InitGeneralTitleStr();
     InitUnitUpgradeRatio();
   }
 }

@@ -68,9 +68,7 @@ library SystemMultiboard requires GlobalVar, optional PlatformHelper {
   }
 
   public function UpdateMultiboardEnemyCount() {
-    if (udg_CurrDiff > 0) {
-      MultiboardSetItemValue(MultiboardItem[enemyCountRowIndex * ColCount + 1], I2S(udg_CurrEnemyCount));
-    }
+    MultiboardSetItemValue(MultiboardItem[enemyCountRowIndex * ColCount + 1], I2S(udg_CurrEnemyCount));
   }
 
   function CalcEnemyCount(){
@@ -107,9 +105,6 @@ library SystemMultiboard requires GlobalVar, optional PlatformHelper {
       ColWidth[2] = 0.04;
       ColWidth[3] = 0.10;
       totalWidth = 0.30;
-    }
-    if (udg_CurrDiff == 0) {
-      rowCountAddtion = rowCountAddtion - 2;
     }
     MultiboardSetTitleText(Multiboard, "英雄榜 难度：" + udg_DiffStr[udg_CurrDiff]);
     MultiboardSetRowCount(Multiboard, PlayerCount + rowCountAddtion);
@@ -149,30 +144,28 @@ library SystemMultiboard requires GlobalVar, optional PlatformHelper {
     MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
     MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], totalWidth);
     MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "|cccdedede────────────────────────────────────────────|r");
-    if (udg_CurrDiff > 0) {
-      row = row + 1;
-      enemyCountRowIndex = row;
-      timerEnemyCount = CreateTimer();
-      TimerStart(timerEnemyCount, 120.0, true, function CalcEnemyCount);
-      // 显示敌人总数
-      MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
-      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.10);
-      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "敌人数量：");
-      MultiboardItem[(row * ColCount) + 1] = MultiboardGetItem(Multiboard, row, 1);
-      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 1], 0.04);
-      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 1], "0");
-      MultiboardItem[(row * ColCount) + 2] = MultiboardGetItem(Multiboard, row, 2);
-      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 2], 0.10);
-      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 2], "超过失败：");
-      MultiboardItem[(row * ColCount) + 3] = MultiboardGetItem(Multiboard, row, 3);
-      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 3], 0.04);
-      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 3], I2S(udg_MaxEnemyCount));
-      row = row + 1;
-      // 设置表底格栅
-      MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
-      MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], totalWidth);
-      MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "|cccdedede────────────────────────────────────────────|r");
-    }
+    row = row + 1;
+    enemyCountRowIndex = row;
+    timerEnemyCount = CreateTimer();
+    TimerStart(timerEnemyCount, 120.0, true, function CalcEnemyCount);
+    // 显示敌人总数
+    MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.10);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "敌人数量：");
+    MultiboardItem[(row * ColCount) + 1] = MultiboardGetItem(Multiboard, row, 1);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 1], 0.04);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 1], "0");
+    MultiboardItem[(row * ColCount) + 2] = MultiboardGetItem(Multiboard, row, 2);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 2], 0.10);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 2], "超过失败：");
+    MultiboardItem[(row * ColCount) + 3] = MultiboardGetItem(Multiboard, row, 3);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 3], 0.04);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 3], I2S(udg_MaxEnemyCount));
+    row = row + 1;
+    // 设置表底格栅
+    MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], totalWidth);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "|cccdedede────────────────────────────────────────────|r");
     row = row + 1;
     // 设置表底
     MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);

@@ -27,7 +27,7 @@ library GamePreparer requires TimerUtils, SystemWorkpoint {
     diffButtons[0] = DialogAddButton(diffDialog, "普通[Normal]", 'N');
     diffButtons[1] = DialogAddButton(diffDialog, "困难[Hard]", 'H');
     diffButtons[2] = DialogAddButton(diffDialog, "专家[Professional]", 'P');
-    diffButtons[3] = DialogAddButton(diffDialog, "简单[Easy]", 'E');
+    diffButtons[3] = DialogAddButton(diffDialog, "史诗[Epic]", 'E');
   }
 
   public function InitQuests() {
@@ -90,12 +90,7 @@ library GamePreparer requires TimerUtils, SystemWorkpoint {
     isPlayerSelected[GetPlayerId(GetTriggerPlayer())] = true;
     for (0 <= i < DiffCount) {
       if (GetClickedButton() == diffButtons[i]) {
-        if (i == DiffCount-1) {
-          // 简单难度
-          diffSelectedCount[0] = diffSelectedCount[0] + 1;
-        } else {
-          diffSelectedCount[i+1] = diffSelectedCount[i+1] + 1;
-        }
+        diffSelectedCount[i] = diffSelectedCount[i] + 1;
       }
     }
     if (IsDiffSelected || diffSelectedNumer < CountPlayersInForceBJ(udg_PlayerForce)) {
