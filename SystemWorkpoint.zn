@@ -45,16 +45,16 @@ library SystemWorkpoint requires SystemMultiboard {
     if (typeId == 0) {
       // 选择单位增加攻击力
       // 攻击力放在最开始两位，如 攻99防88速77血66
-      UnitAtkAdd(u, R2I(ATK_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * GetUnitLevel(u) * (1 + GENERAL_INCREASE_RATIO * PlayerGeneralLevel[playerId])));
+      UnitAtkAdd(u, R2I(ATK_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * GetUnitLevel(u) * (PlayerGeneralApply[playerId])));
     } else if (typeId == 1) {
       // 选择单位增加防御力
-      UnitArmorAdd(u, R2I(DEF_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * GetUnitLevel(u) * (1 + GENERAL_INCREASE_RATIO * PlayerGeneralLevel[playerId])));
+      UnitArmorAdd(u, R2I(DEF_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * GetUnitLevel(u) * (PlayerGeneralApply[playerId])));
     } else if (typeId == 2) {
       // 选择单位增加攻击速度
-      UnitAtkSpdAdd(u, R2I(ATKSPD_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * GetUnitLevel(u) * (1 + GENERAL_INCREASE_RATIO * PlayerGeneralLevel[playerId])));
+      UnitAtkSpdAdd(u, R2I(ATKSPD_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * GetUnitLevel(u) * (PlayerGeneralApply[playerId])));
     } else if (typeId == 3) {
       // 选择单位增加生命值
-      UnitMaxLifeAdd(u, R2I(LIFE_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * GetUnitLevel(u) * (1 + GENERAL_INCREASE_RATIO * PlayerGeneralLevel[playerId])));
+      UnitMaxLifeAdd(u, R2I(LIFE_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * GetUnitLevel(u) * (PlayerGeneralApply[playerId])));
     }
   }
 
@@ -171,6 +171,10 @@ library SystemWorkpoint requires SystemMultiboard {
       DisplayTextToPlayer(Player(playerId), 0, 0, "使用【"+PlayerTitleStr[2]+"】称号效果为|cff66ccff"+GetUnitName(udg_CurrSelectHero[playerId])+"|r分配|cff66ccff"+I2S(attr)+"|r点属性，剩余属性点：|cff66ccff"+R2SW(udg_AssignableAttr[playerId],5,1)+"|r。");
       return;
     }
+    if (!havebinary(udg_CFG_BOOK_ENABLE, udg_CurrDiff)) {
+      DisplayTextToPlayer(Player(playerId), 0, 0, udg_DiffStr[udg_CurrDiff] + "难度禁止购买属性。");
+      return;
+    }
     // 没有，判断金币是否足够
     attr = PurchaseMaxAvailableAttr(playerId, gold, attr);
     if (attr > 0) {
@@ -181,6 +185,10 @@ library SystemWorkpoint requires SystemMultiboard {
 
   function PurchaseLevel(integer playerId, integer attr) {
     integer gold = LEVEL_PRICE;
+    if (!havebinary(udg_CFG_BOOK_ENABLE, udg_CurrDiff)) {
+      DisplayTextToPlayer(Player(playerId), 0, 0, udg_DiffStr[udg_CurrDiff] + "难度禁止购买等级。");
+      return;
+    }
     if (attr > 100 - GetHeroLevel(udg_CurrSelectHero[playerId])) {
       attr = 100 - GetHeroLevel(udg_CurrSelectHero[playerId]);
     }
@@ -217,7 +225,7 @@ library SystemWorkpoint requires SystemMultiboard {
   function ExchangeResource(integer playerId, integer diffWorkpoint, playerstate state) {
     integer targ = 0;
     if (havebinary(udg_CFG_EXCHANGE_ENABLE, udg_CurrDiff) == false) {
-      DisplayTextToPlayer(Player(playerId), 0, 0, "该难度下禁止兑换工分。");
+      DisplayTextToPlayer(Player(playerId), 0, 0, udg_DiffStr[udg_CurrDiff] + "难度禁止兑换工分。");
       return;
     }
     if (diffWorkpoint <= 0) {

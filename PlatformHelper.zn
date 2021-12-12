@@ -1,7 +1,7 @@
 library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
 
   dialog dlgTitle;
-  integer TITLE_COUNT = 8;
+  integer TITLE_COUNT = 10;
   button btnTitle[];
 
   function SetPlayerTitle(player p, integer titleIndex) {
@@ -29,22 +29,13 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
     integer PlayerScoreBefore[];
     integer PlayerScore[];
     integer PlayerGeneralLevel[];
+    real PlayerGeneralApply[];
     integer PlayerUnitKills[];
     integer IssuedSource[];
     integer PlayerTitles[];
     integer PlayerTitleCurr[];
 
     integer addedScore[];
-
-    function IsUnitHaveWing(unit u) -> boolean {
-      integer playerId = GetPlayerId(GetOwningPlayer(u));
-      boolean have = false;
-      if (havebinary(PlayerTitles[playerId], 2)) {
-        have = true;
-      }
-      u = null;
-      return have;
-    }
 
     function DialogTitleClick() {
       integer i;
@@ -78,7 +69,11 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
       DialogSetMessage(dlgTitle, "请选择称号");
       for (0 <= i <= TITLE_COUNT) {
         if (havebinary(PlayerTitles[playerId], i) && i < TITLE_COUNT) {
-          btnTitle[i] = DialogAddButton(dlgTitle, PlayerTitleStr[i+1], 0);
+          if (i == 8) {
+            btnTitle[i] = DialogAddButton(dlgTitle, GeneralTitleStr[PlayerGeneralLevel[playerId]], 0);
+          } else {
+            btnTitle[i] = DialogAddButton(dlgTitle, PlayerTitleStr[i+1], 0);
+          }
         } else if (i==TITLE_COUNT) {
           btnTitle[i] = DialogAddButton(dlgTitle, "取消", 0);
         }
@@ -88,34 +83,42 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
     }
 
     function UnitAddWing(unit u) {
+      integer playerId = GetPlayerId(GetOwningPlayer(u));
       if (!IsUnitType(u, UNIT_TYPE_HERO)) {
         u = null;
         return;
       }
-      if (GetUnitRace(u) == RACE_HUMAN) {
-        UnitAddAbility(u, WINGIDS[0]);
-        UnitMakeAbilityPermanent(u, true, WINGIDS[0]);
-      } else if (GetUnitRace(u) == RACE_ORC) {
-        UnitAddAbility(u, WINGIDS[1]);
-        UnitMakeAbilityPermanent(u, true, WINGIDS[1]);
-      } else if (GetUnitRace(u) == RACE_UNDEAD) {
-        UnitAddAbility(u, WINGIDS[2]);
-        UnitMakeAbilityPermanent(u, true, WINGIDS[2]);
-      } else if (GetUnitRace(u) == RACE_NIGHTELF) {
-        UnitAddAbility(u, WINGIDS[3]);
-        UnitMakeAbilityPermanent(u, true, WINGIDS[3]);
-      } else {
-        UnitAddAbility(u, WINGIDS[4]);
-        UnitMakeAbilityPermanent(u, true, WINGIDS[4]);
+      if (udg_PlayerTitleApply[playerId] == 5) {
+        UnitAddAbility(u, WINGIDS[5]);
+        UnitMakeAbilityPermanent(u, true, WINGIDS[5]);
+      } else if (havebinary(PlayerTitles[playerId], 2)) {
+        if (GetUnitRace(u) == RACE_HUMAN) {
+          UnitAddAbility(u, WINGIDS[0]);
+          UnitMakeAbilityPermanent(u, true, WINGIDS[0]);
+        } else if (GetUnitRace(u) == RACE_ORC) {
+          UnitAddAbility(u, WINGIDS[1]);
+          UnitMakeAbilityPermanent(u, true, WINGIDS[1]);
+        } else if (GetUnitRace(u) == RACE_UNDEAD) {
+          UnitAddAbility(u, WINGIDS[2]);
+          UnitMakeAbilityPermanent(u, true, WINGIDS[2]);
+        } else if (GetUnitRace(u) == RACE_NIGHTELF) {
+          UnitAddAbility(u, WINGIDS[3]);
+          UnitMakeAbilityPermanent(u, true, WINGIDS[3]);
+        } else {
+          UnitAddAbility(u, WINGIDS[4]);
+          UnitMakeAbilityPermanent(u, true, WINGIDS[4]);
+        }
       }
       u = null;
     }
 
     function InitPlatQuest() {
-      CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "一骑当千", "获得方法：通关普通以上难度并击杀超过1000个敌人。\n效果：仅佩戴时，英雄升级时获得可分配的额外属性。使用-cx查询，使用-ll -mj -zl分配属性。", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
-      CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "建筑师", "获得方法：通关任意难度并建造完成超过500个建筑。\n效果：仅佩戴时，建造及建筑升级速度提升80%", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
+      CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "一骑当千", "获得方法：击杀1000个以上敌人。\n效果：仅佩戴时，英雄升级时获得可分配的额外属性。\n使用-cx查询，使用-ll -mj -zl分配属性。", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
+      CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "建筑师", "获得方法：一局内建造完成超过500个建筑。\n效果：仅佩戴时，建造及建筑升级速度提升80%", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
+      CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "将军", "获得方法：使用兵营内训练出来的单位杀敌数超过100个。\n效果：仅佩戴时，根据将军职位，每一级提升10%的单位升级效果。\n使用-cx查询升级需要的杀敌数。", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
       CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "迎难而上", "获得方法：通关困难难度。", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
       CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "天下无双", "获得方法：通关专家难度并且杀敌数超过1000。\n效果：英雄获得翅膀外观。", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
+      CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "威震寰宇", "获得方法：通关史诗难度并且杀敌数超过1000。\n效果：仅佩戴时，英雄获得史诗级翅膀外观。（佩戴时覆盖专家称号翅膀外观）", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
     }
 
     function InitPlayerPlatScore() {
@@ -130,6 +133,7 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
           PlayerScoreBefore[i] = YDWERPGGetKey(Player(i), "a+233");
           // 玩家将军等级
           PlayerGeneralLevel[i] = YDWERPGGetKey(Player(i), "jj");
+          PlayerGeneralApply[i] = 1.0;
           // 玩家单位杀敌数
           PlayerUnitKills[i] = YDWERPGGetKey(Player(i), "dwsd");
           udg_UnitKills[i] = PlayerUnitKills[i];
@@ -162,14 +166,17 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
             DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "|cffffcc00购买了木材，初始资源增加100000木材。|r");
           }
           if (udg_PlayerTitleApply[i] == 2) {
-            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "|cffffcc00使用了一骑当千称号，英雄等级提升时额外获得可分配的属性值。|r");
+            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "当前称号"+PlayerTitleStr[udg_PlayerTitleApply[i]]+"：|cffffcc00英雄等级提升时获得可分配的属性点。|r");
           } else if (udg_PlayerTitleApply[i] == 7) {
             gold = gold + 1000;
             lumber = lumber + 1000;
-            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "|cffffcc00使用了测试员称号，初始资源增加1000金币及1000木材。|r");
+            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "当前称号"+PlayerTitleStr[udg_PlayerTitleApply[i]]+"：|cffffcc00初始资源增加1000金币和1000木材。|r");
           } else if (udg_PlayerTitleApply[i] == 8) {
             udg_PlayerBuildSpeed[i] = 80;
-            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "|cffffcc00使用了建筑师称号，建造速度+80%。|r");
+            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "当前称号"+PlayerTitleStr[udg_PlayerTitleApply[i]]+"：|cffffcc00建造速度+80%。|r");
+          } else if (udg_PlayerTitleApply[i] == 9) {
+            PlayerGeneralApply[i] = 1.0 + PlayerGeneralLevel[i] * GENERAL_INCREASE_RATIO;
+            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "当前称号"+PlayerTitleStr[udg_PlayerTitleApply[i]]+"：|cffffcc00提升所带领部队士气。|r");
           }
           SetPlayerState(Player(i), PLAYER_STATE_RESOURCE_GOLD, gold);
           SetPlayerState(Player(i), PLAYER_STATE_RESOURCE_LUMBER, lumber);
@@ -260,6 +267,14 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
       }
       SetPlayerTitle(p, 4);
     }
+    
+    function GivePlayerEpicTitle(player p) {
+      integer playerId = GetPlayerId(p);
+      if (havebinary(PlayerTitles[playerId], 4)) {
+        return;
+      }
+      SetPlayerTitle(p, 5);
+    }
 
     function GivePlayerBuildMasterTitle(player p) {
       integer playerId = GetPlayerId(p);
@@ -288,11 +303,14 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
               // 如果是困难难度
               playernames = playernames + YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "，";
               GivePlayerHardTitle(Player(i));
-            }
-            if (udg_CurrDiff == 2 && udg_Kills[i] >= 1000) {
+            } else if (udg_CurrDiff == 2 && udg_Kills[i] >= 1000) {
               // 如果是专家难度，杀敌大于1000
               playernames = playernames + YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "，";
               GivePlayerProfesstionalTitle(Player(i));
+            } else if (udg_CurrDiff == 3 && udg_Kills[i] >= 1000) {
+              // 如果是史诗难度，杀敌大于1000
+              playernames = playernames + YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "，";
+              GivePlayerEpicTitle(Player(i));
             }
           } else {
             // 其他情况连胜清空
@@ -305,6 +323,7 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
       } else if (udg_CurrDiff == 2 && winorlose == 1) {
         DisplayTimedTextToForce(udg_PlayerForce, 30.0, "鉴于玩家" + playernames + "所作出的突出贡献，授予"+PlayerTitleStr[3]+"称号！");
       } else if (udg_CurrDiff == 3 && winorlose == 1) {
+        DisplayTimedTextToForce(udg_PlayerForce, 30.0, playernames + "扫清六合，席卷八荒，" + PlayerTitleStr[5]+"！");
         DisplayTimedTextToForce(udg_PlayerForce, 30.0, "恭喜你们，超越了自我，创造了奇迹！"+udg_DiffStr[udg_CurrDiff]+"难度通关！");
       }
     }

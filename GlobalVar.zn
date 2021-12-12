@@ -3,8 +3,8 @@ library GlobalVar {
   public {
     string qqgroup = "39055594";
     string author = "Nastaker";
-    string date = "2021/12/06";
-    string ver = "1.282";
+    string date = "2021/12/13";
+    string ver = "1.283";
     string ROUND_SETTING = "180,70,80,1,8,2,0.5,28,5,5,5,5,17440,0,300;150,50,60,1,8,3,0.5,32,10,10,5,10,17440,25,300;120,40,50,1,8,4,0.5,36,15,15,9,15,43296,75,300;100,40,40,0,8,5,0.5,36,20,20,9,20,43296,100,300;";
     string ENEMY_SETTING = "0.7,5,1.01,10,5,1.01,210,25,1.04,2,0,0,1;1,5,1.02,15,5,1.02,220,25,1.05,2,0,0,1;1.5,5,1.03,20,5,1.05,240,25,1.07,2,0,0,1;2,5,1.05,30,5,1.1,280,25,1.1,2,0,0,1;";
 
@@ -274,6 +274,7 @@ library GlobalVar {
     WINGIDS[2] = 'A00O';
     WINGIDS[3] = 'A00P';
     WINGIDS[4] = 'A00Q';
+    WINGIDS[5] = 'A02H';
   }
 
   function InitPlayerTitleStr() {
@@ -282,7 +283,7 @@ library GlobalVar {
     PlayerTitleStr[2] = "|cffff3333一骑当千|r";
     PlayerTitleStr[3] = "|cffffcc00天下无双|r";
     PlayerTitleStr[4] = "|cffff1111迎难而上|r";
-    PlayerTitleStr[5] = "|cffff1111披荆斩棘|r";
+    PlayerTitleStr[5] = "|cbbffff00威震寰宇|r";
     PlayerTitleStr[6] = "|cffffcc00战无不胜|r";
     PlayerTitleStr[7] = "|cff39C5BB测试员|r";
     PlayerTitleStr[8] = "|cffff9900建筑师|r";
