@@ -442,14 +442,12 @@ library SystemRandomEnemyType requires NBonusMod {
   }
 
   function SpawnEnemy(player p, integer typeid, real x, real y, real face, boolean isStrengthen, boolean isAssassin) -> unit {
-    integer hp;
+    integer hp = R2I(udg_EnemyHPBase + udg_RoundIndex * udg_EnemyHP * Pow(udg_EnemyHPGrowRatio, udg_RoundIndex));
     integer atkspd = R2I(udg_RoundIndex * 5);
     integer atk = R2I(udg_EnemyAttackRatio * Pow(udg_RoundIndex, 2) + udg_EnemyAttack*udg_RoundIndex*Pow(udg_EnemyAttackGrowRatio, udg_RoundIndex));
     integer armor = R2I(udg_EnemyDefBase + udg_RoundIndex * udg_EnemyDef * Pow(udg_EnemyDefGrowRatio, udg_RoundIndex));
     unit u;
-    real scale = 1;
     u = CreateUnit(p, typeid, x, y, face);
-    hp = Max(R2I(udg_EnemyHPBase + udg_RoundIndex * udg_EnemyHP * Pow(udg_EnemyHPGrowRatio, udg_RoundIndex)), R2I(GetUnitState(u, UNIT_STATE_MAX_LIFE)));
     
     if (isAssassin) {
       UnitAddAbility(u, 'Agho');
@@ -462,17 +460,11 @@ library SystemRandomEnemyType requires NBonusMod {
         UnitMakeAbilityPermanent(u, true, 'A029');
       }
       if (IsUnitType(u, UNIT_TYPE_RANGED_ATTACKER)) {
-        scale = scale + udg_RoundIndex * 0.05;
         SetUnitVertexColor(u, 255, 63, 63, 255);
-        SetUnitScale(u, scale, scale, scale);
       } else {
-        scale = scale + udg_RoundIndex * 0.10;
         SetUnitVertexColor(u, 63, 255, 63, 255);
-        SetUnitScale(u, scale, scale, scale);
       }
 
-      atk = R2I(atk * udg_EliteStrengthenRatio);
-      atkspd = R2I(atkspd * udg_EliteStrengthenRatio);
       armor = R2I(armor * udg_EliteStrengthenRatio);
       hp = R2I(hp * udg_EliteStrengthenRatio);
       SetUnitExploded(u, true);
@@ -480,8 +472,6 @@ library SystemRandomEnemyType requires NBonusMod {
     if (IsUnitType(u, UNIT_TYPE_FLYING)) {
       atk = R2I(atk * udg_EnemyFlyingAttrRatio);
       atkspd = R2I(atkspd * udg_EnemyFlyingAttrRatio);
-      armor = R2I(armor * udg_EnemyFlyingAttrRatio);
-      hp = R2I(hp * udg_EnemyFlyingAttrRatio);
     }
     
     UnitAtkSpdAdd(u, atkspd);

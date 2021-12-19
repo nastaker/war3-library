@@ -113,7 +113,7 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
     }
 
     function InitPlatQuest() {
-      CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "一骑当千", "获得方法：击杀1000个以上敌人。\n效果：仅佩戴时，英雄升级时获得可分配的额外属性。\n使用-cx查询，使用-ll -mj -zl分配属性。", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
+      CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "一骑当千", "获得方法：击杀1000个以上敌人。\n效果：仅佩戴时，英雄升级时获得1点额外的全属性、攻击速度、防御力及每秒恢复的生命值。", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
       CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "建筑师", "获得方法：一局内建造完成超过500个建筑。\n效果：仅佩戴时，建造及建筑升级速度提升80%", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
       CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "将军", "获得方法：使用兵营内训练出来的单位杀敌数超过100个。\n效果：仅佩戴时，根据将军职位，每一级提升10%的单位升级效果。\n使用-cx查询升级需要的杀敌数。", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
       CreateQuestBJ(bj_QUESTTYPE_OPT_DISCOVERED, "迎难而上", "获得方法：通关困难难度。", "ReplaceableTextures\\CommandButtons\\BTNStaffOfPreservation.blp");
@@ -166,7 +166,7 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
             DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "|cffffcc00购买了木材，初始资源增加100000木材。|r");
           }
           if (udg_PlayerTitleApply[i] == 2) {
-            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "当前称号"+PlayerTitleStr[udg_PlayerTitleApply[i]]+"：|cffffcc00英雄等级提升时获得可分配的属性点。|r");
+            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "当前称号"+PlayerTitleStr[udg_PlayerTitleApply[i]]+"：|cffffcc00英雄等级提升时获得1点额外的属性点、攻击速度、防御力、每秒生命恢复速度。|r");
           } else if (udg_PlayerTitleApply[i] == 7) {
             gold = gold + 1000;
             lumber = lumber + 1000;

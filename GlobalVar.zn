@@ -3,17 +3,17 @@ library GlobalVar {
   public {
     string qqgroup = "39055594";
     string author = "Nastaker";
-    string date = "2021/12/13";
-    string ver = "1.283";
-    string ROUND_SETTING = "180,70,80,1,8,2,0.5,28,5,5,5,5,17440,0,300;150,50,60,1,8,3,0.5,32,10,10,5,10,17440,25,300;120,40,50,1,8,4,0.5,36,15,15,9,15,43296,75,300;100,40,40,0,8,5,0.5,36,20,20,9,20,43296,100,300;";
-    string ENEMY_SETTING = "0.7,5,1.01,10,5,1.01,210,25,1.04,2,0,0,1;1,5,1.02,15,5,1.02,220,25,1.05,2,0,0,1;1.5,5,1.03,20,5,1.05,240,25,1.07,2,0,0,1;2,5,1.05,30,5,1.1,280,25,1.1,2,0,0,1;";
+    string date = "2021/12/19";
+    string ver = "1.285";
+    string ROUND_SETTING = "150,70,80,1,8,2,0.5,28,5,5,5,5,17440,0,300;120,50,60,1,8,3,0.5,28,10,10,6,5,17440,25,300;100,40,50,1,8,4,0.5,28,15,15,7,5,43296,75,300;80,40,40,0,8,5,0.5,28,20,20,9,5,43296,100,300;";
+    string ENEMY_SETTING = "0.5,5,1.01,10,5,1.01,220,50,1.01,1.2,0,0,0.3;1,5,1.02,15,5,1.02,220,50,1.02,1.3,0,0,0.4;1.5,5,1.03,20,5,1.03,220,50,1.03,1.4,0,0,0.5;2,5,1.05,30,5,1.05,220,50,1.04,1.5,0,0,1;";
 
     integer WORKPOINT_SUPPLY = 5;
     integer MAX_UPGRADE_WORKPOINT = 20;
     integer GAP_PER_LEVEL = 5;
     integer WORKPOINT_UPGRADE_PRICE = 1000;
     integer LEVEL_PRICE = 1500;
-    real GENERAL_INCREASE_RATIO = 0.10;
+    real GENERAL_INCREASE_RATIO = 0.15;
     integer ISSUE_SOURCE_AMOUNT = 4000;
     integer MAX_KILL_COUNT = 99999999;
 
@@ -250,22 +250,22 @@ library GlobalVar {
   }
 
   function InitUnitUpgradeRatio() {
-    ATK_UPGRADE_RATIO[0] = 4; // 攻击力近战
-    ATK_UPGRADE_RATIO[1] = 2; // 攻击力远程
+    ATK_UPGRADE_RATIO[0] = 5; // 攻击力近战
+    ATK_UPGRADE_RATIO[1] = 3; // 攻击力远程
     ATK_UPGRADE_RATIO[2] = 2; // 攻击力近战召唤
-    ATK_UPGRADE_RATIO[3] = 1; // 攻击力远程召唤
-    DEF_UPGRADE_RATIO[0] = 4; // 防御力近战
-    DEF_UPGRADE_RATIO[1] = 2; // 防御力远程
+    ATK_UPGRADE_RATIO[3] = 2; // 攻击力远程召唤
+    DEF_UPGRADE_RATIO[0] = 5; // 防御力近战
+    DEF_UPGRADE_RATIO[1] = 3; // 防御力远程
     DEF_UPGRADE_RATIO[2] = 2; // 防御力近战召唤
-    DEF_UPGRADE_RATIO[3] = 1; // 防御力远程召唤
-    ATKSPD_UPGRADE_RATIO[0] = 2; // 攻速近战
-    ATKSPD_UPGRADE_RATIO[1] = 1; // 攻速远程
-    ATKSPD_UPGRADE_RATIO[2] = 1; // 攻速近战召唤
-    ATKSPD_UPGRADE_RATIO[3] = 1; // 攻速远程召唤
-    LIFE_UPGRADE_RATIO[0] = 25; // 生命值近战
-    LIFE_UPGRADE_RATIO[1] = 15; // 生命值远程
-    LIFE_UPGRADE_RATIO[2] = 15; // 生命值近战召唤
-    LIFE_UPGRADE_RATIO[3] = 5; // 生命值远程召唤
+    DEF_UPGRADE_RATIO[3] = 2; // 防御力远程召唤
+    ATKSPD_UPGRADE_RATIO[0] = 5; // 攻速近战
+    ATKSPD_UPGRADE_RATIO[1] = 3; // 攻速远程
+    ATKSPD_UPGRADE_RATIO[2] = 2; // 攻速近战召唤
+    ATKSPD_UPGRADE_RATIO[3] = 2; // 攻速远程召唤
+    LIFE_UPGRADE_RATIO[0] = 50; // 生命值近战
+    LIFE_UPGRADE_RATIO[1] = 35; // 生命值远程
+    LIFE_UPGRADE_RATIO[2] = 25; // 生命值近战召唤
+    LIFE_UPGRADE_RATIO[3] = 25; // 生命值远程召唤
   }
 
   function InitWingIds() {

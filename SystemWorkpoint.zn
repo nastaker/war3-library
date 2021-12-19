@@ -45,16 +45,16 @@ library SystemWorkpoint requires SystemMultiboard {
     if (typeId == 0) {
       // 选择单位增加攻击力
       // 攻击力放在最开始两位，如 攻99防88速77血66
-      UnitAtkAdd(u, R2I(ATK_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * GetUnitLevel(u) * (PlayerGeneralApply[playerId])));
+      UnitAtkAdd(u, R2I(ATK_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * (PlayerGeneralApply[playerId])));
     } else if (typeId == 1) {
       // 选择单位增加防御力
-      UnitArmorAdd(u, R2I(DEF_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * GetUnitLevel(u) * (PlayerGeneralApply[playerId])));
+      UnitArmorAdd(u, R2I(DEF_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * (PlayerGeneralApply[playerId])));
     } else if (typeId == 2) {
       // 选择单位增加攻击速度
-      UnitAtkSpdAdd(u, R2I(ATKSPD_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * GetUnitLevel(u) * (PlayerGeneralApply[playerId])));
+      UnitAtkSpdAdd(u, R2I(ATKSPD_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * (PlayerGeneralApply[playerId])));
     } else if (typeId == 3) {
       // 选择单位增加生命值
-      UnitMaxLifeAdd(u, R2I(LIFE_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * GetUnitLevel(u) * (PlayerGeneralApply[playerId])));
+      UnitMaxLifeAdd(u, R2I(LIFE_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * (PlayerGeneralApply[playerId])));
     }
   }
 
@@ -120,8 +120,8 @@ library SystemWorkpoint requires SystemMultiboard {
 "防御力：" + I2S(UnitUpgraded[playerId][1]) + "级。\n"+
 "攻击速度：" + I2S(UnitUpgraded[playerId][2]) + "级。\n"+
 "最大生命值：" + I2S(UnitUpgraded[playerId][3]) + "级。\n"+
-"单位杀敌/下一等级（"+GeneralTitleStr[PlayerGeneralLevel[playerId]+1]+"）：" + I2S(udg_UnitKills[playerId]) +"/"+I2S(GeneralUpgradeNeedKills[PlayerGeneralLevel[playerId]+1])+
-"\n可分配属性（"+PlayerTitleStr[2]+"）：" + R2SW(udg_AssignableAttr[playerId],5,1));
+"单位杀敌/下一等级（"+GeneralTitleStr[PlayerGeneralLevel[playerId]+1]+"）：" + I2S(udg_UnitKills[playerId]) +"/"+I2S(GeneralUpgradeNeedKills[PlayerGeneralLevel[playerId]+1]));
+//"\n可分配属性（"+PlayerTitleStr[2]+"）：" + R2SW(udg_AssignableAttr[playerId],5,1)
   }
 
   public function UpgradeUnit(unit u) {
