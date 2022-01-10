@@ -45,16 +45,16 @@ library SystemWorkpoint requires SystemMultiboard {
     if (typeId == 0) {
       // 选择单位增加攻击力
       // 攻击力放在最开始两位，如 攻99防88速77血66
-      UnitAtkAdd(u, R2I(ATK_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * (PlayerGeneralApply[playerId])));
+      UnitAtkAdd(u, R2I(ATK_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * udg_PlayerGeneralApply[playerId] * GetUnitLevel(u) / (GetUnitLevel(u)+1.0)));
     } else if (typeId == 1) {
       // 选择单位增加防御力
-      UnitArmorAdd(u, R2I(DEF_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * (PlayerGeneralApply[playerId])));
+      UnitArmorAdd(u, R2I(DEF_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * udg_PlayerGeneralApply[playerId] * GetUnitLevel(u) / (GetUnitLevel(u)+1.0)));
     } else if (typeId == 2) {
       // 选择单位增加攻击速度
-      UnitAtkSpdAdd(u, R2I(ATKSPD_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * (PlayerGeneralApply[playerId])));
+      UnitAtkSpdAdd(u, R2I(ATKSPD_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * udg_PlayerGeneralApply[playerId] * GetUnitLevel(u) / (GetUnitLevel(u)+1.0)));
     } else if (typeId == 3) {
       // 选择单位增加生命值
-      UnitMaxLifeAdd(u, R2I(LIFE_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * (PlayerGeneralApply[playerId])));
+      UnitMaxLifeAdd(u, R2I(LIFE_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * udg_PlayerGeneralApply[playerId] * GetUnitLevel(u) / (GetUnitLevel(u)+1.0)));
     }
   }
 

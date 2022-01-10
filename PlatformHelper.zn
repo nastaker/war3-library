@@ -29,7 +29,6 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
     integer PlayerScoreBefore[];
     integer PlayerScore[];
     integer PlayerGeneralLevel[];
-    real PlayerGeneralApply[];
     integer PlayerUnitKills[];
     integer IssuedSource[];
     integer PlayerTitles[];
@@ -128,12 +127,14 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
       string ver;
       for (0 <= i < 8) {
         if (GetPlayerController(Player(i))==MAP_CONTROL_USER && GetPlayerSlotState(Player(i)) == PLAYER_SLOT_STATE_PLAYING) {
+          udg_PlayerGeneralApply[i] = 1.0;
+          udg_HeroDamageRatio[i] = UltimateDamageRatio;
+
           PlayerTitles[i] = YDWERPGGetKey(Player(i), "c+1023");
           PlayerTitleCurr[i] = YDWERPGGetKey(Player(i), "ch");
           PlayerScoreBefore[i] = YDWERPGGetKey(Player(i), "a+233");
           // 玩家将军等级
           PlayerGeneralLevel[i] = YDWERPGGetKey(Player(i), "jj");
-          PlayerGeneralApply[i] = 1.0;
           // 玩家单位杀敌数
           PlayerUnitKills[i] = YDWERPGGetKey(Player(i), "dwsd");
           udg_UnitKills[i] = PlayerUnitKills[i];
@@ -166,7 +167,8 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
             DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "|cffffcc00购买了木材，初始资源增加100000木材。|r");
           }
           if (udg_PlayerTitleApply[i] == 2) {
-            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "当前称号"+PlayerTitleStr[udg_PlayerTitleApply[i]]+"：|cffffcc00英雄等级提升时获得1点额外的属性点、攻击速度、防御力、每秒生命恢复速度。|r");
+            udg_HeroDamageRatio[i] = udg_HeroDamageRatio[i] + 0.5;
+            DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "当前称号"+PlayerTitleStr[udg_PlayerTitleApply[i]]+"：|cffffcc00英雄等级提升时获得1点额外的属性点、攻击速度、防御力、每秒生命恢复速度。且技能不受难度影响。|r");
           } else if (udg_PlayerTitleApply[i] == 7) {
             gold = gold + 1000;
             lumber = lumber + 1000;
@@ -175,7 +177,7 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
             udg_PlayerBuildSpeed[i] = 80;
             DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "当前称号"+PlayerTitleStr[udg_PlayerTitleApply[i]]+"：|cffffcc00建造速度+80%。|r");
           } else if (udg_PlayerTitleApply[i] == 9) {
-            PlayerGeneralApply[i] = 1.0 + PlayerGeneralLevel[i] * GENERAL_INCREASE_RATIO;
+            udg_PlayerGeneralApply[i] = 1.0 + PlayerGeneralLevel[i] * GENERAL_INCREASE_RATIO;
             DisplayTimedTextToPlayer(Player(i), 0, 0, 30.0, YDWEGetPlayerColorString(Player(i), GetPlayerName(Player(i))) + "当前称号"+PlayerTitleStr[udg_PlayerTitleApply[i]]+"：|cffffcc00提升所带领部队士气。|r");
           }
           SetPlayerState(Player(i), PLAYER_STATE_RESOURCE_GOLD, gold);

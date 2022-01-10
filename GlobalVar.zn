@@ -3,9 +3,9 @@ library GlobalVar {
   public {
     string qqgroup = "39055594";
     string author = "Nastaker";
-    string date = "2021/12/19";
-    string ver = "1.285";
-    string ROUND_SETTING = "150,70,80,1,8,2,0.5,28,5,5,5,5,17440,0,300;120,50,60,1,8,3,0.5,28,10,10,6,5,17440,25,300;100,40,50,1,8,4,0.5,28,15,15,7,5,43296,75,300;80,40,40,0,8,5,0.5,28,20,20,9,5,43296,100,300;";
+    string date = "2021/01/10";
+    string ver = "1.288";
+    string ROUND_SETTING = "150,70,80,1,8,2,0.5,28,5,5,5,5,17440,0,300,1;120,50,60,1,8,3,0.5,28,10,10,6,10,17440,25,300,0.85;100,40,50,1,8,4,0.5,28,15,15,7,15,43296,75,300,0.7;80,40,40,0,8,5,0.5,28,20,20,9,20,43296,100,300,0.5;";
     string ENEMY_SETTING = "0.5,5,1.01,10,5,1.01,220,50,1.01,1.2,0,0,0.3;1,5,1.02,15,5,1.02,220,50,1.02,1.3,0,0,0.4;1.5,5,1.03,20,5,1.03,220,50,1.03,1.4,0,0,0.5;2,5,1.05,30,5,1.05,220,50,1.04,1.5,0,0,1;";
 
     integer WORKPOINT_SUPPLY = 5;
@@ -14,8 +14,10 @@ library GlobalVar {
     integer WORKPOINT_UPGRADE_PRICE = 1000;
     integer LEVEL_PRICE = 1500;
     real GENERAL_INCREASE_RATIO = 0.15;
+    real UltimateDamageRatio = 1.0;
     integer ISSUE_SOURCE_AMOUNT = 4000;
     integer MAX_KILL_COUNT = 99999999;
+    integer MAX_KILL_COUNT_GAME = 5000;
 
     string PlayerTitleStr[];
     string GeneralTitleStr[];
@@ -84,19 +86,6 @@ library GlobalVar {
       if (tmp != null && tmp != "") {
         GENERAL_INCREASE_RATIO = S2R(tmp);
       }
-      /*
-      ROUND_SETTING = YDWERPGGetMapConfig("ROUND_SETTING");
-      ENEMY_SETTING = YDWERPGGetMapConfig("ENEMY_SETTING");
-      udg_CFG_WORKPOINT_PRICE = S2I(YDWERPGGetMapConfig("WORKPOINT_PRICE"));
-      udg_CFG_ATTR_PRICE = S2I(YDWERPGGetMapConfig("ATTR_PRICE"));
-      udg_CFG_BOOK_ENABLE = S2I(YDWERPGGetMapConfig("BOOK_ENABLE"));
-      udg_CFG_EXCHANGE_ENABLE = S2I(YDWERPGGetMapConfig("EXCHANGE_ENABLE"));
-      WORKPOINT_SUPPLY = S2I(YDWERPGGetMapConfig("WORKPOINT_SUPPLY"));
-      MAX_UPGRADE_WORKPOINT = S2I(YDWERPGGetMapConfig("MAX_UPGRADE_WORKPOINT"));
-      WORKPOINT_UPGRADE_PRICE = S2I(YDWERPGGetMapConfig("WORKPOINT_UPGRADE_PRICE"));
-      LEVEL_PRICE = S2I(YDWERPGGetMapConfig("LEVEL_PRICE"));
-      GENERAL_INCREASE_RATIO = S2R(YDWERPGGetMapConfig("GENERAL_INCREASE_RATIO"));
-      */
     }
   }
 
@@ -155,6 +144,9 @@ library GlobalVar {
         } else if (typeIndex == 14) {
           // 最大敌人数量
           udg_MaxEnemyCount = S2I(valueStr);
+        } else if (typeIndex == 15) {
+          // 大招输出比例
+          UltimateDamageRatio = S2I(valueStr);
         }
         startIndex = i+1;
         typeIndex = typeIndex + 1;
