@@ -1,0 +1,68 @@
+library TrigEventUnitDamaged requires TimerUtils, TrigCommon, TrigEventUnitEnterMap {
+  trigger trigEventUnitDamaged = CreateTrigger();
+  integer trigIndex = 0;
+  integer actionCount = 0;
+  boolean needRegisterEnterMap = true;
+
+  public function TrigEventUnitDamagedAddAction(code action, string actionName, boolean needRegister) {
+    TriggerAddCondition(trigEventUnitDamaged, Condition(action));
+    if (needRegister) {
+      SaveStr(ht_trig, trigIndex, actionCount, actionName);
+      actionCount = actionCount + 1;
+    }
+  }
+
+  function RegisterEventUnitEnteringMap() -> boolean {
+    TriggerRegisterUnitEvent(trigEventUnitDamaged, GetEnteringUnit(), EVENT_UNIT_DAMAGED);
+    // 动态注册，不能阻断后面注册的动作
+    return true;
+  }
+  
+  function RegisterEventUnitDamagedInit() {
+    timer t = GetExpiredTimer();
+    unit u = null;
+    group g = CreateGroup();
+    // 游戏开始后0秒，获取所有单位，添加受伤害事件
+    GroupEnumUnitsInRange(g, 0, 0, 20000.00, null);
+    u = FirstOfGroup(g);
+    while (u != null) {
+      GroupRemoveUnit(g, u);
+      TriggerRegisterUnitEvent(trigEventUnitDamaged, u, EVENT_UNIT_DAMAGED);
+      u = FirstOfGroup(g);
+    }
+    ReleaseTimer(t);
+    DestroyGroup(g);
+    t = null;
+    g = null;
+    u = null;
+  }
+
+  function RegisterEventUnitDamaged() {
+    timer t = NewTimer();
+    timer t2 = GetExpiredTimer();
+    integer i = 0;
+    if (t2 == null) {
+      t2 = NewTimer();
+    }
+    if (trigEventUnitDamaged != null) {
+      DestroyTrigger(trigEventUnitDamaged);
+    }
+    trigEventUnitDamaged = CreateTrigger();
+    TimerStart(t, 0.0, false, function RegisterEventUnitDamagedInit);
+    TrigEventUnitEnterMapAddAction(function RegisterEventUnitEnteringMap, "RegisterEventUnitEnteringMap", needRegisterEnterMap);
+    needRegisterEnterMap = false;
+    // 将所有已注册事件重新注册
+    for (0 <= i < actionCount) {
+      ExecuteFunc(LoadStr(ht_trig, trigIndex, i));
+    }
+    // 十分钟后重新运行自己
+    TimerStart(t2, 600.0, false, function RegisterEventUnitDamaged);
+    t = null;
+    t2 = null;
+  }
+
+  function onInit() {
+    // 初始化触发器
+    RegisterEventUnitDamaged();
+  }
+}

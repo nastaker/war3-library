@@ -1,5 +1,4 @@
-library SystemMultiboard requires GlobalVar, optional PlatformHelper {
-  timer timerEnemyCount = null;
+library SystemMultiboard requires TimerUtils, GlobalVar, optional PlatformHelper {
   group gEnemy = CreateGroup();
   integer enemyCountRowIndex = 0;
   integer rowCountAddtion = 6;
@@ -146,8 +145,7 @@ library SystemMultiboard requires GlobalVar, optional PlatformHelper {
     MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "|cccdedede────────────────────────────────────────────|r");
     row = row + 1;
     enemyCountRowIndex = row;
-    timerEnemyCount = CreateTimer();
-    TimerStart(timerEnemyCount, 120.0, true, function CalcEnemyCount);
+    TimerStart(CreateTimer(), 120.0, true, function CalcEnemyCount);
     // 显示敌人总数
     MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
     MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.10);

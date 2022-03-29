@@ -1,4 +1,4 @@
-library InitGamePassiveObjects requires BonusAdd, NBonusMod {
+library InitGamePassiveObjects requires TimerUtils, BonusAdd, NBonusMod {
 
   integer RandomItemIdDict[];
   integer areaIndex = 0;
@@ -175,7 +175,7 @@ library InitGamePassiveObjects requires BonusAdd, NBonusMod {
     if (areaIndex < 4) {
       TimerStart(GetExpiredTimer(), 1.0, false, function InitBandits);
     } else {
-      DestroyTimer(GetExpiredTimer());
+      ReleaseTimer(GetExpiredTimer());
     }
   }
 
@@ -225,7 +225,7 @@ library InitGamePassiveObjects requires BonusAdd, NBonusMod {
       }
     }
 
-    DestroyTimer(GetExpiredTimer());
+    ReleaseTimer(GetExpiredTimer());
   }
 
   function onInit() {
@@ -233,17 +233,17 @@ library InitGamePassiveObjects requires BonusAdd, NBonusMod {
 
     InitStockRandomItems();
 
-    t = CreateTimer();
+    t = NewTimer();
     // 每30秒，刷新市场售卖的所有物品
     TimerStart(t, 30.0, true, function GenerateStockRandomItems);
     t = null;
     
-    t = CreateTimer();
+    t = NewTimer();
     // 初始化中立资源
     TimerStart(t, 0.5, false, function InitResources);
     t = null;
 
-    t = CreateTimer();
+    t = NewTimer();
     // 初始化中立敌对盗贼
     TimerStart(t, 1.0, false, function InitBandits);
     t = null;

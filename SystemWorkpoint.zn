@@ -45,16 +45,16 @@ library SystemWorkpoint requires SystemMultiboard {
     if (typeId == 0) {
       // 选择单位增加攻击力
       // 攻击力放在最开始两位，如 攻99防88速77血66
-      UnitAtkAdd(u, R2I(ATK_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * udg_PlayerGeneralApply[playerId] * GetUnitLevel(u) / (GetUnitLevel(u)+1.0)));
+      UnitAtkAdd(u, R2I(ATK_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * udg_PlayerGeneralApply[playerId] * GetUnitLevel(u) / 3));
     } else if (typeId == 1) {
       // 选择单位增加防御力
-      UnitArmorAdd(u, R2I(DEF_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * udg_PlayerGeneralApply[playerId] * GetUnitLevel(u) / (GetUnitLevel(u)+1.0)));
+      UnitArmorAdd(u, R2I(DEF_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * udg_PlayerGeneralApply[playerId] * GetUnitLevel(u) / 3));
     } else if (typeId == 2) {
       // 选择单位增加攻击速度
-      UnitAtkSpdAdd(u, R2I(ATKSPD_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * udg_PlayerGeneralApply[playerId] * GetUnitLevel(u) / (GetUnitLevel(u)+1.0)));
+      UnitAtkSpdAdd(u, R2I(ATKSPD_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * udg_PlayerGeneralApply[playerId] * GetUnitLevel(u) / 3));
     } else if (typeId == 3) {
       // 选择单位增加生命值
-      UnitMaxLifeAdd(u, R2I(LIFE_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * udg_PlayerGeneralApply[playerId] * GetUnitLevel(u) / (GetUnitLevel(u)+1.0)));
+      UnitMaxLifeAdd(u, R2I(LIFE_UPGRADE_RATIO[buffIndex] * UnitCurrUpgradeLevel * udg_PlayerGeneralApply[playerId] * GetUnitLevel(u) / 3));
     }
   }
 
@@ -350,29 +350,11 @@ library SystemWorkpoint requires SystemMultiboard {
     integer playerId = GetPlayerId(GetEnumPlayer());
     // 发放工分资源
     integer allocatedWorkpoint = 0;
-    // 发放积分资源，每轮最多发放4000*轮数资源
-    integer source = ISSUE_SOURCE_AMOUNT * (1+udg_RoundIndex);
-    integer sourceGold = 0;
-    integer sourceLumber = 0;
-    // 检查IssuedSource资源是否足够，若足够IssuedSource减去source；若IssuedSource不足，则source改为IssuedSource，并将IssuedSource清零
-    if (IssuedSource[playerId] > source) {
-      IssuedSource[playerId] = IssuedSource[playerId] - source;
-    } else {
-      IssuedSource[playerId] = 0;
-      source = IssuedSource[playerId];
-    }
-    // 按3：1比例发放
-    sourceGold = R2I(source * 3 * 0.25);
-    sourceLumber = R2I(source * 1 * 0.25);
 
     allocatedWorkpoint = WORKPOINT_SUPPLY * (1+udg_RoundIndex);
     udg_PlayerWorkPoint[playerId] = udg_PlayerWorkPoint[playerId] + allocatedWorkpoint;
-    
-    SetPlayerState(GetEnumPlayer(), PLAYER_STATE_RESOURCE_GOLD, GetPlayerState(GetEnumPlayer(), PLAYER_STATE_RESOURCE_GOLD) + sourceGold);
-    SetPlayerState(GetEnumPlayer(), PLAYER_STATE_RESOURCE_LUMBER, GetPlayerState(GetEnumPlayer(), PLAYER_STATE_RESOURCE_LUMBER) + sourceLumber);
+    DisplayTextToPlayer(Player(playerId), 0, 0, "|cff66ccff获得工分："+I2S(allocatedWorkpoint)+"，可用于购买单位属性升级，在修补匠处使用。|r");
 
-    DisplayTextToPlayer(GetEnumPlayer(), 0, 0, "|cff66ccff获得工分："+I2S(allocatedWorkpoint)+"，可用于购买单位属性升级，在修补匠处使用。|r");
-    DisplayTextToPlayer(GetEnumPlayer(), 0, 0, "|cff66ccff获得资源："+I2S(sourceGold)+"金币，"+I2S(sourceLumber)+"木材。（由积分转化）|r");
   }
 
   public function UpdateWorkPoint() {

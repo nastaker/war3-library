@@ -1,0 +1,11 @@
+library Commons requires GlobalVar {
+
+  public {
+    function IsOutOfBounds(real x, real y) -> boolean {
+      if (x <= MIN_BOUND_X || x >= MAX_BOUND_X || y <= MIN_BOUND_Y || y >= MAX_BOUND_Y) {
+        return true;
+      }
+      return false;
+    }
+  }
+}

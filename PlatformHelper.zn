@@ -3,6 +3,7 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
   dialog dlgTitle;
   integer TITLE_COUNT = 10;
   button btnTitle[];
+  integer IssuedSource[];
 
   function SetPlayerTitle(player p, integer titleIndex) {
     integer playerId = GetPlayerId(p);
@@ -21,6 +22,31 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
     }
   }
 
+  function DistributePlayerResourceAction() {
+    // 发放积分资源，每轮最多发放4000*轮数资源
+    integer playerId = GetPlayerId(GetEnumPlayer());
+    integer source = ISSUE_SOURCE_AMOUNT * (1+udg_RoundIndex);
+    integer sourceGold = 0;
+    integer sourceLumber = 0;
+    if (IssuedSource[playerId] == 0) {
+      return;
+    }
+    // 检查IssuedSource资源是否足够，若足够IssuedSource减去source；若IssuedSource不足，则source改为IssuedSource，并将IssuedSource清零
+    if (IssuedSource[playerId] > source) {
+      IssuedSource[playerId] = IssuedSource[playerId] - source;
+    } else {
+      source = IssuedSource[playerId];
+      IssuedSource[playerId] = 0;
+    }
+    // 按3：1比例发放
+    sourceGold = R2I(source * 3 * 0.25);
+    sourceLumber = R2I(source * 1 * 0.25);
+    
+    SetPlayerState(Player(playerId), PLAYER_STATE_RESOURCE_GOLD, GetPlayerState(Player(playerId), PLAYER_STATE_RESOURCE_GOLD) + sourceGold);
+    SetPlayerState(Player(playerId), PLAYER_STATE_RESOURCE_LUMBER, GetPlayerState(Player(playerId), PLAYER_STATE_RESOURCE_LUMBER) + sourceLumber);
+    DisplayTextToPlayer(Player(playerId), 0, 0, "|cff66ccff获得资源："+I2S(sourceGold)+"金币，"+I2S(sourceLumber)+"木材。（由积分转化）|r");
+  }
+
   public {
     boolean isPlayerChangedTitle[];
     integer PlayerWinStreak[];
@@ -30,9 +56,9 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
     integer PlayerScore[];
     integer PlayerGeneralLevel[];
     integer PlayerUnitKills[];
-    integer IssuedSource[];
     integer PlayerTitles[];
     integer PlayerTitleCurr[];
+    integer PlayerConsumptionTotal[];
 
     integer addedScore[];
 
@@ -90,6 +116,9 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
       if (udg_PlayerTitleApply[playerId] == 5) {
         UnitAddAbility(u, WINGIDS[5]);
         UnitMakeAbilityPermanent(u, true, WINGIDS[5]);
+      } else if (PlayerConsumptionTotal[playerId] >= CONSUMPTION_TO_GET_WING) {
+        UnitAddAbility(u, WINGIDS[6]);
+        UnitMakeAbilityPermanent(u, true, WINGIDS[6]);
       } else if (havebinary(PlayerTitles[playerId], 2)) {
         if (GetUnitRace(u) == RACE_HUMAN) {
           UnitAddAbility(u, WINGIDS[0]);
@@ -133,6 +162,7 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
           PlayerTitles[i] = YDWERPGGetKey(Player(i), "c+1023");
           PlayerTitleCurr[i] = YDWERPGGetKey(Player(i), "ch");
           PlayerScoreBefore[i] = YDWERPGGetKey(Player(i), "a+233");
+          PlayerConsumptionTotal[i] = YDWERPGGetKey(Player(i), "xfze");
           // 玩家将军等级
           PlayerGeneralLevel[i] = YDWERPGGetKey(Player(i), "jj");
           // 玩家单位杀敌数
@@ -327,6 +357,12 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
       } else if (udg_CurrDiff == 3 && winorlose == 1) {
         DisplayTimedTextToForce(udg_PlayerForce, 30.0, playernames + "扫清六合，席卷八荒，" + PlayerTitleStr[5]+"！");
         DisplayTimedTextToForce(udg_PlayerForce, 30.0, "恭喜你们，超越了自我，创造了奇迹！"+udg_DiffStr[udg_CurrDiff]+"难度通关！");
+      }
+    }
+
+    function DistributePlayerResource(){
+      if (udg_IsOnPlat11) {
+        ForForce(udg_PlayerForce, function DistributePlayerResourceAction);
       }
     }
   }

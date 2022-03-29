@@ -16,7 +16,7 @@ library GamePreparer requires TimerUtils, SystemWorkpoint {
   timerdialog diffTimerDialog;
 
   function InitVars() {
-    diffTimer = NewTimer();
+    diffTimer = CreateTimer();
     diffTimerDialog = CreateTimerDialog(diffTimer);
     diffDialog = DialogCreate();
     raceDialog = DialogCreate();
@@ -125,6 +125,8 @@ library GamePreparer requires TimerUtils, SystemWorkpoint {
   function RegisterPlayerThings() {
     SetPlayerTechMaxAllowedSwap('Nsir', 1, GetEnumPlayer());
     SetPlayerTechMaxAllowedSwap('Hvwd', 1, GetEnumPlayer());
+    SetPlayerTechMaxAllowedSwap('Ncjz', 1, GetEnumPlayer());
+    SetPlayerTechMaxAllowedSwap('Nari', 1, GetEnumPlayer());
     TriggerRegisterPlayerUnitEventSimple(gg_trg_Warpten, GetEnumPlayer(), EVENT_PLAYER_UNIT_CONSTRUCT_START);
     TriggerRegisterPlayerUnitEventSimple(gg_trg_Warpten, GetEnumPlayer(), EVENT_PLAYER_UNIT_UPGRADE_START);
     DialogDisplay(GetEnumPlayer(), diffDialog, true);
