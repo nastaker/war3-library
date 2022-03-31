@@ -1,27 +1,22 @@
 library CaiJueZhe requires TimerUtils, TrigEventUnitDamaged, TrigEventUnitDeath {
-  real CoolDown = 0.03;
-  integer CaiJueIsCD = 0x137200;
-  integer CaiJueKillCount = 0x137201;
-  integer CaiJuePassive = 0x137202;
-  integer CaiJueAttackSpeed = 0x137203;
-  integer CaiJueAttackSpeedTimer = 0x137210;
-
-  boolean needRegisterQ = true;
-  boolean needRegisterW = true;
-  boolean needRegisterE = true;
-  boolean needRegisterR = true;
-  boolean needRegisterPassive = true;
+  constant real CoolDown = 0.03;
+  constant integer CaiJueIsCD = 0x137200;
+  constant integer CaiJueKillCount = 0x137201;
+  constant integer CaiJuePassive = 0x137202;
+  constant integer CaiJueAttackSpeed = 0x137203;
+  constant integer CaiJueAttackSpeedTimer = 0x137210;
+  constant integer CaiJueSpellGroupRegist = 0x137220;
 
   group gPassiveUnits = CreateGroup();
 
-  integer AbiIdQ = 'Acj1';
-  integer AbiIdW = 'Acj2';
-  integer AbiIdE = 'Acj3';
-  integer AbiIdR = 'Acj4';
-  integer AbiIdPassive = 'Acj0';
+  constant integer AbiIdQ = 'Acj1';
+  constant integer AbiIdW = 'Acj2';
+  constant integer AbiIdE = 'Acj3';
+  constant integer AbiIdR = 'Acj4';
+  constant integer AbiIdPassive = 'Acj0';
 
   function InnerCoolingDown() {
-    SaveBoolean(ht, ReleaseTimer(GetExpiredTimer()), CaiJueIsCD, false);
+    SaveBoolean(ht, CaiJueIsCD, ReleaseTimer(GetExpiredTimer()), false);
   }
 
   function CaiJueZheQ_Action() -> boolean {
@@ -30,6 +25,10 @@ library CaiJueZhe requires TimerUtils, TrigEventUnitDamaged, TrigEventUnitDeath 
     group g = null;
     integer AbiLvl = GetUnitAbilityLevel(GetEventDamageSource(), AbiIdQ);
     real damage = 0.;
+    // 攻击者必须不能是镜像
+    if (IsUnitIllusion(GetEventDamageSource())) {
+      return true;
+    }
     // 伤害必须大于1才进入技能
     if (GetEventDamage() <= 1) {
       return true;
@@ -39,26 +38,26 @@ library CaiJueZhe requires TimerUtils, TrigEventUnitDamaged, TrigEventUnitDeath 
       return true;
     }
     // 判断是否CD中：
-    if (LoadBoolean(ht, GetHandleId(GetEventDamageSource()), CaiJueIsCD)) {
+    if (LoadBoolean(ht, CaiJueIsCD, GetHandleId(GetEventDamageSource()))) {
       return true;
     }
     if (GetRandomInt(1, 10) > 1) {
       return true;
     }
     hero = GetEventDamageSource();
-    SaveBoolean(ht, GetHandleId(hero), CaiJueIsCD, true);
+    SaveBoolean(ht, CaiJueIsCD, GetHandleId(hero), true);
     // 0.03秒内置CD
     TimerStart(NewTimerEx(GetHandleId(hero)), CoolDown, false, function InnerCoolingDown);
     // 10%概率触发，伤害周围300码内地面单位。
     // 获取周围300码内地面单位
     // 对其造成(技能等级×50)+英雄等级×敏捷×(0.5%*技能等级) 物理伤害。
-    damage = AbiLvl*50+GetUnitLevel(hero)*GetHeroAgi(hero, true)*(0.05*AbiLvl);
+    damage = AbiLvl*50+GetUnitLevel(hero)*GetHeroAgi(hero, true)*(0.005*AbiLvl);
     g = CreateGroup();
     GroupEnumUnitsInRange(g, GetUnitX(hero), GetUnitY(hero), 300.0, null);
     enemy = FirstOfGroup(g);
     while (enemy != null) {
       GroupRemoveUnit(g, enemy);
-      if (IsUnitEnemy(enemy, GetOwningPlayer(hero)) && GetUnitState(enemy, UNIT_STATE_LIFE) > 0.405 && IsUnitType(enemy, UNIT_TYPE_FLYING) == false) {
+      if (IsUnitEnemy(enemy, GetOwningPlayer(hero)) && GetUnitState(enemy, UNIT_STATE_LIFE) > 0.405 && IsUnitType(enemy, UNIT_TYPE_STRUCTURE) == false && IsUnitType(enemy, UNIT_TYPE_FLYING) == false) {
         UnitDamageTarget(hero, enemy, damage, true, false, ATTACK_TYPE_HERO, DAMAGE_TYPE_NORMAL, WEAPON_TYPE_WOOD_HEAVY_SLICE);
         DestroyEffect(AddSpecialEffectTarget("Objects\\Spawnmodels\\Critters\\Albatross\\CritterBloodAlbatross.mdl", enemy, "chest"));
       }
@@ -77,6 +76,10 @@ library CaiJueZhe requires TimerUtils, TrigEventUnitDamaged, TrigEventUnitDeath 
     unit enemy = null;
     integer AbiLvl = GetUnitAbilityLevel(GetEventDamageSource(), AbiIdW);
     real damage = 0.;
+    // 攻击者必须不能是镜像
+    if (IsUnitIllusion(GetEventDamageSource())) {
+      return true;
+    }
     // 伤害必须大于1才进入技能
     if (GetEventDamage() <= 1) {
       return true;
@@ -86,22 +89,22 @@ library CaiJueZhe requires TimerUtils, TrigEventUnitDamaged, TrigEventUnitDeath 
       return true;
     }
     // 判断是否CD中：
-    if (LoadBoolean(ht, GetHandleId(GetEventDamageSource()), CaiJueIsCD)) {
+    if (LoadBoolean(ht, CaiJueIsCD, GetHandleId(GetEventDamageSource()))) {
       return true;
     }
     if (GetRandomInt(1, 10) > 1) {
       return true;
     }
     hero = GetEventDamageSource();
-    SaveBoolean(ht, GetHandleId(hero), CaiJueIsCD, true);
+    SaveBoolean(ht, CaiJueIsCD, GetHandleId(hero), true);
     // 0.03秒内置CD
     TimerStart(NewTimerEx(GetHandleId(hero)), CoolDown, false, function InnerCoolingDown);
     // 10%概率触发，伤害目标地面单位。
     // 获取周围300码内地面单位
     // 对其造成造成(100×技能等级)+英雄等级×敏捷×(1%×技能等级)物理伤害。
-    damage = AbiLvl*100+GetUnitLevel(hero)*GetHeroAgi(hero, true)*(0.01*AbiLvl);
+    damage = AbiLvl*100+GetUnitLevel(hero)*GetHeroAgi(hero, true)*(0.001*AbiLvl);
     enemy = GetTriggerUnit();
-    if (IsUnitEnemy(enemy, GetOwningPlayer(hero)) && GetUnitState(enemy, UNIT_STATE_LIFE) > 0.405 && IsUnitType(enemy, UNIT_TYPE_FLYING) == false) {
+    if (IsUnitEnemy(enemy, GetOwningPlayer(hero)) && GetUnitState(enemy, UNIT_STATE_LIFE) > 0.405 && IsUnitType(enemy, UNIT_TYPE_STRUCTURE) == false && IsUnitType(enemy, UNIT_TYPE_FLYING) == false) {
       UnitDamageTarget(hero, enemy, damage, true, false, ATTACK_TYPE_HERO, DAMAGE_TYPE_NORMAL, WEAPON_TYPE_WOOD_HEAVY_SLICE);
       DestroyEffect(AddSpecialEffectTarget("BloodEffect.mdx", enemy, "chest"));
     }
@@ -112,9 +115,9 @@ library CaiJueZhe requires TimerUtils, TrigEventUnitDamaged, TrigEventUnitDeath 
   }
 
   function CaiJueAttackSpeedTimer_Action() {
-    unit hero = LoadUnitHandle(ht, GetHandleId(GetExpiredTimer()), CaiJueAttackSpeedTimer);
-    integer atkspd = LoadInteger(ht, GetHandleId(hero), CaiJueAttackSpeed);
-    SaveInteger(ht, GetHandleId(hero), CaiJueAttackSpeed, 0);
+    unit hero = LoadUnitHandle(ht, CaiJueAttackSpeedTimer, GetHandleId(GetExpiredTimer()));
+    integer atkspd = LoadInteger(ht, CaiJueAttackSpeed, GetHandleId(hero));
+    SaveInteger(ht, CaiJueAttackSpeed, GetHandleId(hero), 0);
     UnitAtkSpdAdd(hero, -atkspd);
     hero = null;
   }
@@ -125,6 +128,10 @@ library CaiJueZhe requires TimerUtils, TrigEventUnitDamaged, TrigEventUnitDeath 
     integer AbiLvl = GetUnitAbilityLevel(GetTriggerUnit(), AbiIdE);
     integer atkspd = 0;
     timer t = null;
+    // 被攻击者必须不能是镜像
+    if (IsUnitIllusion(GetTriggerUnit())) {
+      return true;
+    }
     // 伤害必须大于1才进入技能
     if (GetEventDamage() <= 1) {
       return true;
@@ -134,38 +141,38 @@ library CaiJueZhe requires TimerUtils, TrigEventUnitDamaged, TrigEventUnitDeath 
       return true;
     }
     // 判断是否CD中：
-    if (LoadBoolean(ht, GetHandleId(GetTriggerUnit()), CaiJueIsCD)) {
+    if (LoadBoolean(ht, CaiJueIsCD, GetHandleId(GetTriggerUnit()))) {
       return true;
     }
     if (GetRandomInt(1, 10) > 1) {
       return true;
     }
     hero = GetTriggerUnit();
-    SaveBoolean(ht, GetHandleId(hero), CaiJueIsCD, true);
+    SaveBoolean(ht, CaiJueIsCD, GetHandleId(hero), true);
     // 0.03秒内置CD
     TimerStart(NewTimerEx(GetHandleId(hero)), CoolDown, false, function InnerCoolingDown);
     // 获取英雄靠此技能获得的攻速
-    atkspd = LoadInteger(ht, GetHandleId(hero), CaiJueAttackSpeed);
+    atkspd = LoadInteger(ht, CaiJueAttackSpeed, GetHandleId(hero));
     // 获取当前的额外攻速，若已经大于400了，就不再叠加
     if (GetUnitBonus(hero, BONUS_ATTACK_SPEED) > 400) {
-      // 仅刷新持续时间，20秒持续时间后，清空
-      TimerStart(LoadTimerHandle(ht, GetHandleId(hero), CaiJueAttackSpeedTimer), 20.0, false, function CaiJueAttackSpeedTimer_Action);
+      // 仅刷新持续时间，10秒持续时间后，清空
+      TimerStart(LoadTimerHandle(ht, CaiJueAttackSpeedTimer, GetHandleId(hero)), 10.0, false, function CaiJueAttackSpeedTimer_Action);
       hero = null;
       return true;
     }
     atkspd = atkspd + 5 * AbiLvl;
     UnitAtkSpdAdd(hero, 5 * AbiLvl);
-    SaveInteger(ht, GetHandleId(hero), CaiJueAttackSpeed, atkspd);
+    SaveInteger(ht, CaiJueAttackSpeed, GetHandleId(hero), atkspd);
     // 增加英雄攻速
     // 获取英雄计时器
-    t = LoadTimerHandle(ht, GetHandleId(hero), CaiJueAttackSpeedTimer);
+    t = LoadTimerHandle(ht, CaiJueAttackSpeedTimer, GetHandleId(hero));
     if (t == null) {
       t = CreateTimer();
-      SaveUnitHandle(ht, GetHandleId(t), CaiJueAttackSpeedTimer, hero);
-      SaveTimerHandle(ht, GetHandleId(hero), CaiJueAttackSpeedTimer, t);
+      SaveUnitHandle(ht, CaiJueAttackSpeedTimer, GetHandleId(t), hero);
+      SaveTimerHandle(ht, CaiJueAttackSpeedTimer, GetHandleId(hero), t);
     }
-    // 20秒持续时间后，清空
-    TimerStart(t, 20.0, false, function CaiJueAttackSpeedTimer_Action);
+    // 10秒持续时间后，清空
+    TimerStart(t, 10.0, false, function CaiJueAttackSpeedTimer_Action);
     t = null;
     // 为防止干扰其他事件动作，必须返回true
     return true;
@@ -186,15 +193,15 @@ library CaiJueZhe requires TimerUtils, TrigEventUnitDamaged, TrigEventUnitDeath 
     }
     hero = GetKillingUnit();
     enemy = GetDyingUnit();
-    killCount = LoadInteger(ht, GetHandleId(hero), CaiJueKillCount) + 1;
+    killCount = LoadInteger(ht, CaiJueKillCount, GetHandleId(hero)) + 1;
     // 判断击杀数量是否达到10个
     if (killCount >= 10) {
-      SaveInteger(ht, GetHandleId(hero), CaiJueKillCount, 0);
+      SaveInteger(ht, CaiJueKillCount, GetHandleId(hero), 0);
       // 增加敏捷属性
       SetHeroAgi(hero, GetHeroAgi(hero, false) + AbiLvl, false);
       CreateTextTagUnitBJ("+" + I2S(AbiLvl) + "敏捷。", hero, 0, 11, 100, 0.00, 0.00, 0);
     } else {
-      SaveInteger(ht, GetHandleId(hero), CaiJueKillCount, killCount);
+      SaveInteger(ht, CaiJueKillCount, GetHandleId(hero), killCount);
       CreateTextTagUnitBJ(I2S(killCount)+"!", hero, 0, 11, 100, 0.00, 0.00, 0);
     }
     SetTextTagLifespan(bj_lastCreatedTextTag, 1.50);
@@ -224,14 +231,13 @@ library CaiJueZhe requires TimerUtils, TrigEventUnitDamaged, TrigEventUnitDeath 
 
   function PassiveReviveHealthGroupAction() {
     unit u = GetEnumUnit();
-    real reviveHealth = GetUnitLevel(u)*GetUnitAbilityLevel(u, AbiIdPassive)*GetHeroAgi(u, true)*0.005;
-    if (GetUnitX(u)+GetUnitY(u) != LoadReal(ht, GetHandleId(u), CaiJuePassive)) {
+    if (GetUnitX(u)+GetUnitY(u) != LoadReal(ht, CaiJuePassive, GetHandleId(u))) {
       // 非满血
       if (GetUnitState(u, UNIT_STATE_LIFE) < GetUnitState(u, UNIT_STATE_MAX_LIFE)) {
-        SetUnitState(u, UNIT_STATE_LIFE, GetUnitState(u, UNIT_STATE_LIFE)+reviveHealth);
+        SetUnitState(u, UNIT_STATE_LIFE, GetUnitState(u, UNIT_STATE_LIFE)+GetUnitLevel(u)*GetUnitAbilityLevel(u, AbiIdPassive)*GetHeroAgi(u, true)*0.005);
       }
     }
-    SaveReal(ht, GetHandleId(u), CaiJuePassive, GetUnitX(u)+GetUnitY(u));
+    SaveReal(ht, CaiJuePassive, GetHandleId(u), GetUnitX(u)+GetUnitY(u));
     u = null;
   }
 
@@ -249,35 +255,36 @@ library CaiJueZhe requires TimerUtils, TrigEventUnitDamaged, TrigEventUnitDeath 
   public {
     // 全局单位受伤害触发器重置后，需要重新调用注册事件
     function RegisterEvent_CaiJueZheQ() {
-      //
-      TrigEventUnitDamagedAddAction(function CaiJueZheQ_Action, "RegisterEvent_CaiJueZheQ", needRegisterQ);
-      needRegisterQ = false;
+      boolean needRegister = !LoadBoolean(ht, CaiJueSpellGroupRegist, 'Q');
+      TrigEventUnitDamagedAddAction(function CaiJueZheQ_Action, "RegisterEvent_CaiJueZheQ", needRegister);
+      SaveBoolean(ht, CaiJueSpellGroupRegist, 'Q', true);
     }
 
     // 全局单位受伤害触发器重置后，需要重新调用注册事件
     function RegisterEvent_CaiJueZheW() {
-      //
-      TrigEventUnitDamagedAddAction(function CaiJueZheW_Action, "RegisterEvent_CaiJueZheW", needRegisterW);
-      needRegisterW = false;
+      boolean needRegister = !LoadBoolean(ht, CaiJueSpellGroupRegist, 'W');
+      TrigEventUnitDamagedAddAction(function CaiJueZheW_Action, "RegisterEvent_CaiJueZheW", needRegister);
+      SaveBoolean(ht, CaiJueSpellGroupRegist, 'W', true);
     }
 
     // 全局单位受伤害触发器重置后，需要重新调用注册事件
     function RegisterEvent_CaiJueZheE() {
-      //
-      TrigEventUnitDamagedAddAction(function CaiJueZheE_Action, "RegisterEvent_CaiJueZheE", needRegisterE);
-      needRegisterE = false;
+      boolean needRegister = !LoadBoolean(ht, CaiJueSpellGroupRegist, 'E');
+      TrigEventUnitDamagedAddAction(function CaiJueZheE_Action, "RegisterEvent_CaiJueZheE", needRegister);
+      SaveBoolean(ht, CaiJueSpellGroupRegist, 'E', true);
     }
 
     // 全局单位死亡害触发器重置后，需要重新调用注册事件
     function RegisterEvent_CaiJueZheR() {
-      //
-      TrigEventUnitDeathAddAction(function CaiJueZheR_Action, "RegisterEvent_CaiJueZheR", needRegisterR);
-      needRegisterR = false;
+      boolean needRegister = !LoadBoolean(ht, CaiJueSpellGroupRegist, 'R');
+      TrigEventUnitDeathAddAction(function CaiJueZheR_Action, "RegisterEvent_CaiJueZheR", needRegister);
+      SaveBoolean(ht, CaiJueSpellGroupRegist, 'R', true);
     }
 
     function RegisterEvent_CaiJueZhePassive() {
-      TrigEventUnitEnterMapAddAction(function CaiJueZhePassive_Action, "RegisterEvent_CaiJueZhePassive", needRegisterPassive);
-      needRegisterPassive = false;
+      boolean needRegister = !LoadBoolean(ht, CaiJueSpellGroupRegist, 'P');
+      TrigEventUnitEnterMapAddAction(function CaiJueZhePassive_Action, "RegisterEvent_CaiJueZhePassive", needRegister);
+      SaveBoolean(ht, CaiJueSpellGroupRegist, 'P', true);
     }
   }
 

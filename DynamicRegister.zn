@@ -1,7 +1,5 @@
 library DynamicRegister requires ItemAbilityMod {
 
-  boolean needRegister = true;
-
   function RegisterEventHeroItemPickDrop() -> boolean {
     unit u = GetEnteringUnit();
 
@@ -19,7 +17,8 @@ library DynamicRegister requires ItemAbilityMod {
   }
 
   function onInit() {
+    boolean needRegister = !LoadBoolean(ht, RegisterEventHeroItemPickDrop, 'DROP');
     TrigEventUnitEnterMapAddAction(function RegisterEventHeroItemPickDrop, "RegisterEventHeroItemPickDrop", needRegister);
-    needRegister = false;
+    SaveBoolean(ht, RegisterEventHeroItemPickDrop, 'DROP', true);
   }
 }

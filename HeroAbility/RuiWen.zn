@@ -1,0 +1,284 @@
+library RuiWen requires TimerUtils, LineSegmentEnumeration {
+
+  constant integer AbiIdQ = 'A00C'; //'Arw1';
+  constant integer AbiIdQ2 = 'A00D'; //'Arw1';
+  constant integer AbiIdQCooling = 'RWQC';
+  constant integer AbiIdW = 'A00E';
+  constant integer AbiIdE = 'A00G';
+  constant integer AbiIdR = 'Arw4';
+  constant integer AbiIdPassive = 'Arw0';
+
+  trigger trgAbilitySpell = CreateTrigger();
+
+  function FoldWingsDanceAction() {
+    integer heroId = GetTimerData(GetExpiredTimer());
+    unit hero = LoadUnitHandle(ht, heroId, 'unit');
+    integer count = LoadInteger(ht, heroId, 'cont');
+    real facing = LoadReal(ht, heroId, 'face');
+    integer timerCount = LoadInteger(ht, heroId, 'time') + 1;
+    boolean finish = false;
+    group g = CreateGroup();
+    unit u = null;
+    SaveInteger(ht, heroId, 'time', timerCount);
+    // 第一次Q时间为：0.734秒，以0.03秒一次计数为25次
+    // 第二次Q时间为：0.640秒，以0.03秒一次计数为22次
+    // 第三次Q时间为：0.864秒，以0.03秒一次计数为29次
+    // 第一次运行此timer，播放动画
+    if (timerCount == 1) {
+      // 播放单位动画
+      SetUnitAnimationByIndex(hero, 9+count);
+    }
+    // 移动单位，但仅在前10帧完成移动
+    if (timerCount < 10) {
+      // 如果是第三次释放，需要跳起来，起跳高度为移动距离×（5-帧数）
+      if (count == 3) {
+        SetUnitFlyHeight(hero, GetUnitFlyHeight(hero) + 16 * (5 - timerCount), 0);
+      }
+      SetUnitX(hero, GetUnitX(hero) + CosBJ(facing) * 16);
+      SetUnitY(hero, GetUnitY(hero) + SinBJ(facing) * 16);
+    }
+    // 第十帧
+    if (timerCount == 10) {
+      // 对敌人造成伤害，起始点：单位原始位置-50，终点：当前位置+150
+      // 结束时对150范围内单位造成伤害（懒得计算这么精确）
+      LineSegment.EnumUnits(g, LoadReal(ht, heroId, 'x')-50*CosBJ(facing), LoadReal(ht, heroId, 'y')-50*SinBJ(facing), GetUnitX(hero)+150*CosBJ(facing), GetUnitY(hero)+150*SinBJ(facing), 150., null);
+      u = FirstOfGroup(g);
+      while(u != null) {
+        if (GetUnitState(u, UNIT_STATE_LIFE) < 0.405 || IsUnitAlly(u, GetOwningPlayer(hero)) || IsUnitType(u, UNIT_TYPE_FLYING)) {
+        } else {
+          DestroyEffect(AddSpecialEffect("Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodLarge0.mdl", GetUnitX(u), GetUnitY(u)));
+          UnitDamageTarget(hero, u, LoadReal(ht, heroId, 'damg'), true, false, ATTACK_TYPE_HERO, DAMAGE_TYPE_NORMAL, WEAPON_TYPE_WHOKNOWS);
+        }
+        GroupRemoveUnit(g, u);
+        u = FirstOfGroup(g);
+      }
+      DestroyGroup(g);
+      // 标记为Q技能施法结束
+      SaveBoolean(ht, heroId, AbiIdQCooling, false);
+      if (count == 3) {
+        // 施加击飞效果
+        DestroyEffect(AddSpecialEffect("Abilities\\Spells\\Human\\Thunderclap\\ThunderClapCaster.mdl", GetUnitX(hero), GetUnitY(hero)));
+      }
+    }
+    if (count == 1) {
+      if (timerCount > 24) {
+        finish = true;
+      }
+    } else if (count == 2) {
+      if (timerCount > 21) {
+        finish = true;
+      }
+    } else if (count == 3) {
+      if (timerCount > 28) {
+        finish = true;
+      }
+    }
+    // 借用一下count,后面反正用不到
+    count = 7;
+    if (GetUnitState(hero, UNIT_STATE_LIFE) < 0.405) {
+      finish = true;
+      count = 0;
+    }
+    if (finish) {
+      // 播放站立动画
+      SetUnitAnimationByIndex(hero, count);
+      ReleaseTimer(GetExpiredTimer());
+    }
+    hero = null;
+    u = null;
+    g = null;
+  }
+
+  function FoldWingsDanceTimeOverAction() {
+    integer heroId = GetTimerData(GetExpiredTimer());
+    unit hero = LoadUnitHandle(ht, heroId, 'unit');
+    // 删除辅助技能
+    UnitRemoveAbility(hero, AbiIdQ2);
+    // 启用主技能
+    SetPlayerAbilityAvailable(GetOwningPlayer(hero), AbiIdQ, true);
+    // 重置释放次数
+    SaveInteger(ht, GetHandleId(hero), AbiIdQ, 0);
+    ReleaseTimer(GetExpiredTimer());
+    hero = null;
+  }
+
+  function FoldWingsDance() -> boolean {
+    unit hero = null;
+    integer count = 0;
+    // 释放技能必须等Q技能完成（同技能模板释放一次会触发两次，所以屏蔽第二次释放）
+    if (LoadBoolean(ht, GetHandleId(GetTriggerUnit()), AbiIdQCooling)) {
+      return true;
+    }
+    // 标记为Q技能施法中
+    SaveBoolean(ht, GetHandleId(GetTriggerUnit()), AbiIdQCooling, true);
+    hero = GetTriggerUnit();
+    // 获取英雄第几次释放
+    count = LoadInteger(ht, GetHandleId(hero), AbiIdQ);
+    // 释放次数加1
+    count = count + 1;
+    // 保存技能相关参数
+    // 计时器计数
+    SaveInteger(ht, GetHandleId(hero), 'time', 0);
+    // 英雄
+    SaveUnitHandle(ht, GetHandleId(hero), 'unit', hero);
+    // 英雄面向方向
+    SaveReal(ht, GetHandleId(hero), 'face', GetUnitFacing(hero));
+    // 原始位置
+    SaveReal(ht, GetHandleId(hero), 'x', GetUnitX(hero));
+    SaveReal(ht, GetHandleId(hero), 'y', GetUnitY(hero));
+    // 技能伤害
+    SaveReal(ht, GetHandleId(hero), 'damg', 20.*GetUnitAbilityLevel(hero, GetSpellAbilityId())-10+((0.35+0.05*GetUnitAbilityLevel(hero, GetSpellAbilityId()))*GetHeroStr(hero, true)));
+    // 技能释放次数
+    SaveInteger(ht, GetHandleId(hero), 'cont', count);
+    // SaveReal(ht, GetHandleId(hero), 'face', );
+    // 发动技能效果
+    TimerStart(NewTimerEx(GetHandleId(hero)), 0.03, true, function FoldWingsDanceAction);
+    PlaySoundOnUnitBJ(gg_snd_RivenQ, 100, hero);
+    if (count == 1) {
+      // 到3秒后删除辅助技能，启用主动技能。
+      TimerStart(NewTimerEx(GetHandleId(hero)), 3.00, true, function FoldWingsDanceTimeOverAction);
+      // 等于第1次释放，添加辅助技能
+      UnitAddAbility(hero, AbiIdQ2);
+      // 设置辅助技能等级
+      SetUnitAbilityLevel(hero, AbiIdQ2, GetUnitAbilityLevel(hero, AbiIdQ));
+      // 禁用主技能
+      SetPlayerAbilityAvailable(GetOwningPlayer(hero), AbiIdQ, false);
+    } else if (count == 3) {
+      // 等于第三次释放，删除辅助技能
+      UnitRemoveAbility(hero, AbiIdQ2);
+      // 启用主技能
+      SetPlayerAbilityAvailable(GetOwningPlayer(hero), AbiIdQ, true);
+      // 重置释放次数
+      count = 0;
+    }
+    // 保存释放次数
+    SaveInteger(ht, GetHandleId(hero), AbiIdQ, count);
+    return true;
+  }
+
+  function ShockSoulRoarRangeUnitBoolexp() -> boolean {
+
+    if (IsUnitType(GetFilterUnit(), UNIT_TYPE_STRUCTURE) || GetUnitState(GetFilterUnit(), UNIT_STATE_LIFE) < 0.405) {
+      return false;
+    }
+
+    return true;
+  }
+
+
+  function ShockSoulRoar() -> boolean {
+    unit hero = null;
+    real damage = 0;
+    unit u = null;
+    group g = CreateGroup();
+    hero = GetTriggerUnit();
+    damage = GetHeroStr(hero, true) + GetUnitAbilityLevel(hero, AbiIdW) * 50.;
+    // 对周围单位造成力量+（技能等级×50）的伤害
+    GroupEnumUnitsInRange(g, GetUnitX(hero), GetUnitY(hero), 350., Condition(function ShockSoulRoarRangeUnitBoolexp));
+
+    u = FirstOfGroup(g);
+    while(u != null) {
+      if (IsUnitAlly(u, GetOwningPlayer(hero))) {
+      } else {
+        DestroyEffect(AddSpecialEffect("Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodLarge0.mdl", GetUnitX(u), GetUnitY(u)));
+        UnitDamageTarget(hero, u, damage, false, false, ATTACK_TYPE_HERO, DAMAGE_TYPE_NORMAL, WEAPON_TYPE_WHOKNOWS);
+      }
+      GroupRemoveUnit(g, u);
+      u = FirstOfGroup(g);
+    }
+    DestroyGroup(g);
+    g = null;
+    hero = null;
+    return true;
+  }
+
+  function YongWangZhiQianAction() {
+    integer heroId = GetTimerData(GetExpiredTimer());
+    unit hero = LoadUnitHandle(ht, heroId, 'unit');
+    real juli = LoadReal(ht, heroId, 'juli');
+    real facing = LoadReal(ht, heroId, 'face');
+
+    if (juli <= 20.) {
+      // 播放冲刺动画
+      SetUnitAnimationByIndex(hero, 14);
+    }
+
+    // 移动距离
+    SaveReal(ht, GetHandleId(hero), 'juli', juli + 20.);
+
+    SetUnitX(hero, GetUnitX(hero) + CosBJ(facing) * 20.);
+    SetUnitY(hero, GetUnitY(hero) + SinBJ(facing) * 20.);
+
+    if (juli >= 125.) {
+      // 播放站立动画
+      SetUnitAnimationByIndex(hero, 6);
+      ReleaseTimer(GetExpiredTimer());
+    }
+
+    hero = null;
+  }
+
+  function YongWangZhiQian() -> boolean {
+    unit hero = GetTriggerUnit();
+    // 移动距离
+    SaveReal(ht, GetHandleId(hero), 'juli', 0);
+    // 面向方向
+    SaveReal(ht, GetHandleId(hero), 'face', GetUnitFacing(hero));
+    // 英雄
+    SaveUnitHandle(ht, GetHandleId(hero), 'unit', hero);
+    // 发动技能效果
+    TimerStart(NewTimerEx(GetHandleId(hero)), 0.03, true, function YongWangZhiQianAction);
+
+    hero = null;
+    return true;
+  }
+
+
+  function TrigAbilitySpellAction() -> boolean {
+    // 施法者必须是英雄
+    if (!IsUnitType(GetTriggerUnit(), UNIT_TYPE_HERO)) {
+      return false;
+    }
+    // 释放技能等于锐雯Q 或 Q2（Q进入CD后的假技能）
+    if (GetSpellAbilityId() == AbiIdQ || GetSpellAbilityId() == AbiIdQ2) {
+      FoldWingsDance();
+      return true;
+    }
+    // 释放技能等于锐雯W
+    if (GetSpellAbilityId() == AbiIdW) {
+      // 施法者必须是英雄
+      if (!IsUnitType(GetTriggerUnit(), UNIT_TYPE_HERO)) {
+        return false;
+      }
+      ShockSoulRoar();
+      return true;
+    }
+    // 释放技能等于锐雯E
+    if (GetSpellAbilityId() == AbiIdE) {
+      // 施法者必须是英雄
+      if (!IsUnitType(GetTriggerUnit(), UNIT_TYPE_HERO)) {
+        return false;
+      }
+      YongWangZhiQian();
+      return true;
+    }
+    // 释放技能等于锐雯R
+    if (GetSpellAbilityId() == AbiIdR) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function TrigInitAbility() {
+    integer i = 0;
+    for(0 <= i < 12) {
+      TriggerRegisterPlayerUnitEvent(trgAbilitySpell, Player(i), EVENT_PLAYER_UNIT_SPELL_EFFECT, null);
+    }
+    TriggerAddCondition(trgAbilitySpell, Condition(function TrigAbilitySpellAction));
+  }
+
+  function onInit() {
+    TrigInitAbility();
+  }
+}

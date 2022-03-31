@@ -1,4 +1,4 @@
-library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
+library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGBilling, YDWERPGScores {
 
   dialog dlgTitle;
   integer TITLE_COUNT = 10;
@@ -153,7 +153,6 @@ library PlatformHelper requires GlobalVar, SystemBinary, YDWERPGScores {
       integer i = 0;
       integer gold = 0;
       integer lumber = 0;
-      string ver;
       for (0 <= i < 8) {
         if (GetPlayerController(Player(i))==MAP_CONTROL_USER && GetPlayerSlotState(Player(i)) == PLAYER_SLOT_STATE_PLAYING) {
           udg_PlayerGeneralApply[i] = 1.0;
