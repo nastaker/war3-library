@@ -1,39 +1,15 @@
 library TrigEventUnitEnterMap requires TimerUtils, TrigCommon {
-  integer trigIndex = 1;
   trigger trigEventUnitEnteringMap = CreateTrigger();
-  integer actionCount = 0;
-  
 
   public function TrigEventUnitEnterMapAddAction(code action, string actionName, boolean needRegister) {
     TriggerAddCondition(trigEventUnitEnteringMap, Condition(action));
-    if (needRegister) {
-      SaveStr(ht_trig, trigIndex, actionCount, actionName);
-      actionCount = actionCount + 1;
-    }
-  }
-
-  function RegisterEventUnitEnterMap() {
-    timer t = GetExpiredTimer();
-    integer i = 0;
-    if (t == null) {
-      t = NewTimer();
-    }
-    if (trigEventUnitEnteringMap != null) {
-      DestroyTrigger(trigEventUnitEnteringMap);
-    }
-    trigEventUnitEnteringMap = CreateTrigger();
-    TriggerRegisterEnterRectSimple(trigEventUnitEnteringMap, bj_mapInitialPlayableArea);
-    // 将所有已注册事件重新注册
-    for (0 <= i < actionCount) {
-      ExecuteFunc(LoadStr(ht_trig, trigIndex, i));
-    }
-    // 十分钟后重新运行自己
-    TimerStart(t, 600.0, false, function RegisterEventUnitEnterMap);
-    t = null;
   }
 
   function onInit() {
+    region regen = CreateRegion();
     // 初始化触发器
-    RegisterEventUnitEnterMap();
+    RegionAddRect(regen,GetWorldBounds());
+    TriggerRegisterEnterRegion(trigEventUnitEnteringMap, regen, null);
+    regen = null;
   }
 }

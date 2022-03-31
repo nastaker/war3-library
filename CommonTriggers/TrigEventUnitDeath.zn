@@ -1,41 +1,15 @@
 library TrigEventUnitDeath requires TimerUtils, TrigCommon{
-  integer trigIndex = 2;
   trigger trigEventUnitDeath = CreateTrigger();
-  integer actionCount = 0;
 
   public function TrigEventUnitDeathAddAction(code action, string actionName, boolean needRegister) {
     TriggerAddCondition(trigEventUnitDeath, Condition(action));
-    if (needRegister) {
-      SaveStr(ht_trig, trigIndex, actionCount, actionName);
-      actionCount = actionCount + 1;
-    }
   }
-
-  function RegisterEventUnitDeath() {
-    timer t = GetExpiredTimer();
-    integer i = 0;
-    if (t == null) {
-      t = NewTimer();
-    }
-    if (trigEventUnitDeath != null) {
-      DestroyTrigger(trigEventUnitDeath);
-    }
-    trigEventUnitDeath = CreateTrigger();
-    for (0 <= i <= 12) {
-      TriggerRegisterPlayerUnitEvent(trigEventUnitDeath, Player(i), EVENT_PLAYER_UNIT_DEATH, null);
-    }
-    // 将所有已注册事件重新注册
-    for (0 <= i < actionCount) {
-      ExecuteFunc(LoadStr(ht_trig, trigIndex, i));
-    }
-    // 十分钟后重新运行自己
-    TimerStart(t, 600.0, false, function RegisterEventUnitDeath);
-    t = null;
-  }
-
 
   function onInit() {
     // 初始化触发器
-    RegisterEventUnitDeath();
+    integer i = 0;
+    for (0 <= i < 12) {
+      TriggerRegisterPlayerUnitEvent(trigEventUnitDeath, Player(i), EVENT_PLAYER_UNIT_DEATH, null);
+    }
   }
 }

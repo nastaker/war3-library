@@ -28,13 +28,14 @@ library TrigEventUnitDamaged requires TimerUtils, TrigCommon, TrigEventUnitEnter
     while (u != null) {
       GroupRemoveUnit(g, u);
       TriggerRegisterUnitEvent(trigEventUnitDamaged, u, EVENT_UNIT_DAMAGED);
+      u = null;
       u = FirstOfGroup(g);
     }
     ReleaseTimer(t);
+    GroupClear(g);
     DestroyGroup(g);
     t = null;
     g = null;
-    u = null;
   }
 
   function RegisterEventUnitDamaged() {
@@ -46,6 +47,7 @@ library TrigEventUnitDamaged requires TimerUtils, TrigCommon, TrigEventUnitEnter
     }
     if (trigEventUnitDamaged != null) {
       DestroyTrigger(trigEventUnitDamaged);
+      trigEventUnitDamaged = null;
     }
     trigEventUnitDamaged = CreateTrigger();
     TimerStart(t, 0.0, false, function RegisterEventUnitDamagedInit);

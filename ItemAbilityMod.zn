@@ -48,30 +48,16 @@ library ItemAbilityMod requires TimerUtils, NBonusMod {
   }
 
   function UnitAttrRecalculation(integer ispickup) {
-    unit hero = GetManipulatingUnit();
-    item mItem = GetManipulatedItem();
     integer value = 0;
-    integer base = 0;
-    string ItemAbils = null;
     integer i;
-    ItemAbils = LoadStr(ht, GetItemTypeId(mItem), ITEM_ATTR);
     for (0 <= i < ATTR_COUNT) {
-      value = S2I(SubString(ItemAbils, i*NUM_SPACE, (i+1)*NUM_SPACE)) * ispickup;
-      base = LoadInteger(ht, GetHandleId(hero), UNIT_ATTR + i);
+      value = S2I(SubString(LoadStr(ht, GetItemTypeId(GetManipulatedItem()), ITEM_ATTR), i*NUM_SPACE, (i+1)*NUM_SPACE)) * ispickup;
       if (value == 0) {
       } else {
-        // 重算英雄属性
-        if (i == UNIT_ATTR_MAX_LIFE || i == UNIT_ATTR_MAX_MANA) {
-          UnitAttrAdd(hero, i, value);
-        } else {
-          UnitAttrSet(hero, i, base + value);
-        }
-        // 将属性添加到英雄属性表中
-        SaveInteger(ht, GetHandleId(hero), UNIT_ATTR + i, base + value);
+        // 英雄属性
+        UnitAttrAdd(GetManipulatingUnit(), i, value);
       }
     }
-    hero = null;
-    mItem = null;
   }
 
   function IsUnitCanPickUpItem() -> boolean {

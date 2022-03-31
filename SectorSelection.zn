@@ -1,0 +1,96 @@
+library SectorSelection {
+  private function AngleBetweenAngles(real angle1, real angle2) -> real {
+    real r = ModuloReal(angle1 - angle2, 360.0);
+    if (r < 180.0) {
+      return r;
+    } else {
+      return 360.0 - r;
+    }
+  }
+
+  struct SectorData {
+    unit u;
+    real distance;
+    real anglerange;
+    group g;
+
+    method destroy() {
+      DestroyGroup(this.g);
+      this.g = null;
+      this.u = null;
+      this.deallocate();
+    }
+
+    private static method create(unit u, real tx, real ty, real distance, real anglerange) -> SectorData {
+        SectorData data = SectorData.allocate();
+        real x0 = GetUnitX(u);
+        real y0 = GetUnitY(u);
+        real angle = bj_RADTODEG * Atan2(ty - y0, tx - x0);
+        unit fu;
+        group g = CreateGroup();
+        real x;
+        real y;
+        real f;
+        real d;
+        real halfangle = anglerange / 2;
+        real halfrange = 0 / 2;
+
+        data.distance = distance;
+        data.anglerange = anglerange;
+        data.u = u;
+        data.g = CreateGroup();
+        GroupEnumUnitsInRange(g, x0, y0, distance, null);
+        do {
+          fu = null;
+          fu = FirstOfGroup(g);
+          if (fu != u && IsUnitAliveBJ(u)) {
+            x = GetUnitX(fu);
+            y = GetUnitY(fu);
+            d = halfrange * TanBJ(halfangle);
+            f = bj_RADTODEG * Atan2(y - y0, x - x0);
+            if (RAbsBJ(AngleBetweenAngles(angle, f)) <= 90) {
+              f = bj_RADTODEG * Atan2(y - y0+d*SinBJ(f+180), x - x0+d*CosBJ(f+180));
+            }
+            if (AngleBetweenAngles(angle,f) < halfangle) {
+              GroupAddUnit(data.g, fu);
+            }
+          }
+          GroupRemoveUnit(g, fu);
+        } while (fu != null);
+        DestroyGroup(g);
+        g = null;
+        return data;
+    }
+
+    private static method launch() -> boolean {
+      SectorData data;
+      unit u = null;
+      real damage = 0.0;
+      if (GetSpellAbilityId() == 'ANfl') {
+        data = SectorData.create(GetTriggerUnit(), GetSpellTargetX(), GetSpellTargetY(), 800, 60);
+        // 造成伤害为：智力×技能等级×2
+        damage = ((GetHeroAgi(data.u,true)-GetHeroAgi(data.u,false))*0.1+GetHeroAgi(data.u,false))*GetUnitAbilityLevel(data.u, GetSpellAbilityId())*2.0;
+        do {
+          u = null;
+          u = FirstOfGroup(data.g);
+          if (IsUnitEnemy(u, GetOwningPlayer(data.u)) && !IsUnitType(u, UNIT_TYPE_STRUCTURE)) {
+            UnitDamageTarget(data.u, u, damage, false, false, ATTACK_TYPE_NORMAL, DAMAGE_TYPE_ENHANCED, null);
+          }
+          GroupRemoveUnit(data.g, u);
+        } while (u != null);
+        u = null;
+        data.destroy();
+      }
+      return false;
+    }
+
+    private static method onInit() {
+        trigger trg = CreateTrigger();
+        TriggerRegisterAnyUnitEventBJ(trg, EVENT_PLAYER_UNIT_SPELL_EFFECT);
+        TriggerAddCondition(trg, Condition(function SectorData.launch));
+        trg = null;
+    }
+  }
+
+
+}

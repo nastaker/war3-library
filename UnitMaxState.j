@@ -1,11 +1,11 @@
 library UnitMaxState initializer Initialize requires optional AbilityPreload, optional xepreload
 
 globals
-    private constant integer RAWCODE_LIFE = 'ZxL0'
-    private constant integer RAWCODE_MANA = 'ZxM0'
+    private constant integer RAWCODE_LIFE = 'ZxLa'
+    private constant integer RAWCODE_MANA = 'ZxMa'
     
-    public constant integer ABILITY_COUNT = 5
-    private constant boolean PRELOAD_ABILITIES = true
+    public constant integer ABILITY_COUNT = 7
+    private constant boolean PRELOAD_ABILITIES = false
     
     private integer array POWERS_OF_2
 endglobals

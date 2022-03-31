@@ -1,18 +1,26 @@
 library GlobalVar {
 
   public {
-    string qqgroup = "39055594";
-    string author = "Nastaker";
-    string date = "2022/03/28";
-    string ver = "1.291";
-    string ROUND_SETTING = "150,70,80,1,8,2,0.5,28,5,5,5,5,17440,0,300,1;120,50,60,1,8,3,0.5,28,10,10,6,10,17440,25,300,0.85;100,40,50,1,8,4,0.5,28,15,15,7,15,43296,75,300,0.7;80,40,40,0,8,5,0.5,28,20,20,9,20,43296,100,300,0.5;";
+    constant string qqgroup = "39055594";
+    constant string author = "Nastaker";
+    constant string date = "2024/06/15";
+    constant string ver = "1.30";
+    constant real MIN_BOUND_X = -9700;
+    constant real MIN_BOUND_Y = -9700;
+    constant real MAX_BOUND_X = 9700;
+    constant real MAX_BOUND_Y = 9700;
+
+    string ROUND_SETTING = "150,70,80,1,8,2,0.5,28,5,5,5,5,17440,0,500,1,1.00,0.10;120,50,60,1,8,3,0.5,28,10,10,6,10,17440,25,500,0.85,0.80,0.075;100,40,50,1,8,4,0.5,28,15,15,7,15,43296,75,500,0.7,0.70,0.05;80,40,40,0,8,5,0.5,28,20,20,9,20,43296,100,500,0.5,0.50,0.03;";
     string ENEMY_SETTING = "0.5,5,1.01,10,5,1.01,220,50,1.01,1.2,0,0,0.3;1,5,1.02,15,5,1.02,220,50,1.02,1.3,0,0,0.4;1.5,5,1.03,20,5,1.03,220,50,1.03,1.4,0,0,0.5;2,5,1.05,30,5,1.05,220,50,1.04,1.5,0,0,1;";
+    string GOLD_LIST = "";
+    string LUMBER_LIST = "";
+    integer ITEM_GOLD_AMOUNT = 0;
+    integer ITEM_LUMBER_AMOUNT = 0;
 
-    real MIN_BOUND_X = -9700;
-    real MIN_BOUND_Y = -9700;
-    real MAX_BOUND_X = 9700;
-    real MAX_BOUND_Y = 9700;
 
+    real UNIT_UPGRADE_BASE = 0.50;
+    real UNIT_UPGRADE_RATIO = 0.06;
+    real UNIT_UPGRADE_POWER = 1.5;
     integer WORKPOINT_SUPPLY = 5;
     integer MAX_UPGRADE_WORKPOINT = 20;
     integer GAP_PER_LEVEL = 5;
@@ -23,7 +31,6 @@ library GlobalVar {
     integer ISSUE_SOURCE_AMOUNT = 4000;
     integer MAX_KILL_COUNT = 99999999;
     integer MAX_KILL_COUNT_GAME = 5000;
-    integer CONSUMPTION_TO_GET_WING = 300;
 
     string PlayerTitleStr[];
     string GeneralTitleStr[];
@@ -92,9 +99,37 @@ library GlobalVar {
       if (tmp != null && tmp != "") {
         GENERAL_INCREASE_RATIO = S2R(tmp);
       }
-      tmp = YDWERPGGetMapConfig("CONSUMPTION_TO_GET_WING");
+      tmp = YDWERPGGetMapConfig("GAP_PER_LEVEL");
       if (tmp != null && tmp != "") {
-        CONSUMPTION_TO_GET_WING = S2I(tmp);
+        GAP_PER_LEVEL = S2I(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("UNIT_UPGRADE_BASE");
+      if (tmp != null && tmp != "") {
+        UNIT_UPGRADE_BASE = S2R(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("UNIT_UPGRADE_RATIO");
+      if (tmp != null && tmp != "") {
+        UNIT_UPGRADE_RATIO = S2R(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("UNIT_UPGRADE_POWER");
+      if (tmp != null && tmp != "") {
+        UNIT_UPGRADE_POWER = S2R(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("GOLD_LIST");
+      if (tmp != null && tmp != "") {
+        GOLD_LIST = tmp;
+      }
+      tmp = YDWERPGGetMapConfig("LUMBER_LIST");
+      if (tmp != null && tmp != "") {
+        LUMBER_LIST = tmp;
+      }
+      tmp = YDWERPGGetMapConfig("ITEM_GOLD_AMOUNT");
+      if (tmp != null && tmp != "") {
+        ITEM_GOLD_AMOUNT = S2I(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("ITEM_LUMBER_AMOUNT");
+      if (tmp != null && tmp != "") {
+        ITEM_LUMBER_AMOUNT = S2I(tmp);
       }
     }
   }
@@ -156,7 +191,13 @@ library GlobalVar {
           udg_MaxEnemyCount = S2I(valueStr);
         } else if (typeIndex == 15) {
           // 大招输出比例
-          UltimateDamageRatio = S2I(valueStr);
+          UltimateDamageRatio = S2R(valueStr);
+        } else if (typeIndex == 16) {
+          // 基础经验值比例
+          udg_CFG_EXP_RATIO = S2R(valueStr);
+        } else if (typeIndex == 17) {
+          // 英雄经验值奖励
+          udg_CFG_EXP_RATIO_BONUS = S2R(valueStr);
         }
         startIndex = i+1;
         typeIndex = typeIndex + 1;
@@ -282,15 +323,15 @@ library GlobalVar {
 
   function InitPlayerTitleStr() {
     PlayerTitleStr[0] = "无";
-    PlayerTitleStr[1] = "|cffffcc00元老玩家|r";
-    PlayerTitleStr[2] = "|cffff3333一骑当千|r";
-    PlayerTitleStr[3] = "|cffffcc00天下无双|r";
-    PlayerTitleStr[4] = "|cffff1111迎难而上|r";
-    PlayerTitleStr[5] = "|cbbffff00威震寰宇|r";
-    PlayerTitleStr[6] = "|cffffcc00战无不胜|r";
-    PlayerTitleStr[7] = "|cff39C5BB测试员|r";
-    PlayerTitleStr[8] = "|cffff9900建筑师|r";
-    PlayerTitleStr[9] = "|cffff3333将军|r";
+    PlayerTitleStr[1] = "|cffff3333一骑当千|r";
+    PlayerTitleStr[2] = "|cffff3333将军|r";
+    PlayerTitleStr[3] = "|cffffcc00建筑师|r";
+    PlayerTitleStr[4] = "|cffff1111|r";
+    PlayerTitleStr[5] = "|cbbffff00|r";
+    PlayerTitleStr[6] = "|cffffcc00|r";
+    PlayerTitleStr[7] = "|cff39C5BB|r";
+    PlayerTitleStr[8] = "|cffff9900|r";
+    PlayerTitleStr[9] = "|cffff3333|r";
   }
 
   function InitGeneralTitleStr() {

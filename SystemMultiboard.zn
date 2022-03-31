@@ -13,15 +13,18 @@ library SystemMultiboard requires TimerUtils, GlobalVar, optional PlatformHelper
     // 设置玩家工分
     MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 2], YDWEGetPlayerColorString(Player(playerIndex), I2S(udg_PlayerWorkPoint[playerIndex])));
     // 设置玩家单位升级
-    MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 3], YDWEGetPlayerColorString(Player(playerIndex), I2S(UnitUpgraded[playerIndex][0])+"攻"+I2S(UnitUpgraded[playerIndex][1])+"防"+I2S(UnitUpgraded[playerIndex][2])+"速"+I2S(UnitUpgraded[playerIndex][3])+"血"));
+    MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 3], YDWEGetPlayerColorString(Player(playerIndex), I2S(UnitUpgraded[playerIndex][0])));
+    MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 4], YDWEGetPlayerColorString(Player(playerIndex), I2S(UnitUpgraded[playerIndex][1])));
+    MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 5], YDWEGetPlayerColorString(Player(playerIndex), I2S(UnitUpgraded[playerIndex][2])));
+    MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 6], YDWEGetPlayerColorString(Player(playerIndex), I2S(UnitUpgraded[playerIndex][3])));
     // 从这列开始，平台上游玩才会有
     if (udg_IsOnPlat11) {
       // 设置玩家积分
-      MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 4], YDWEGetPlayerColorString(Player(playerIndex), I2S(PlayerScore[playerIndex])));
+      MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 7], YDWEGetPlayerColorString(Player(playerIndex), I2S(PlayerScore[playerIndex])));
       // 设置玩家本局积分
-      MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 5], YDWEGetPlayerColorString(Player(playerIndex), I2S(addedScore[playerIndex])));
+      MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 8], YDWEGetPlayerColorString(Player(playerIndex), I2S(addedScore[playerIndex])));
       // 设置玩家称号
-      MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 6], GetPlayerTitle(playerIndex));
+      MultiboardSetItemValue(MultiboardItem[(PlayerMultiboardRowIndex[playerIndex] * ColCount) + 9], GetPlayerTitle(playerIndex));
     }
   }
 
@@ -70,6 +73,10 @@ library SystemMultiboard requires TimerUtils, GlobalVar, optional PlatformHelper
     MultiboardSetItemValue(MultiboardItem[enemyCountRowIndex * ColCount + 1], I2S(udg_CurrEnemyCount));
   }
 
+  public function UpdateMultiboardTime() {
+    MultiboardSetItemValue(MultiboardItem[(enemyCountRowIndex * ColCount) + 5], I2S(udg_Time/60) + ":" + I2S(ModuloInteger(udg_Time, 60)));
+  }
+
   function CalcEnemyCount(){
     // 设置敌人总数
     udg_CurrEnemyCount = 0;
@@ -86,26 +93,32 @@ library SystemMultiboard requires TimerUtils, GlobalVar, optional PlatformHelper
     PlayerCount = CountPlayersInForceBJ(udg_PlayerForce);
 
     if (udg_IsOnPlat11) {
-      ColCount = 7;
+      ColCount = 10;
       ColWidth[0] = 0.08;
       ColWidth[1] = 0.04;
       ColWidth[2] = 0.04;
-      ColWidth[3] = 0.10;
-      ColWidth[4] = 0.04;
-      ColWidth[5] = 0.04;
-      ColWidth[6] = 0.04;
-      totalWidth = 0.38;
+      ColWidth[3] = 0.015;
+      ColWidth[4] = 0.015;
+      ColWidth[5] = 0.015;
+      ColWidth[6] = 0.015;
+      ColWidth[7] = 0.04;
+      ColWidth[8] = 0.04;
+      ColWidth[9] = 0.03;
+      totalWidth = 0.33;
       InitPlayerPlatScore();
       InitPlatQuest();
     } else {
-      ColCount = 4;
+      ColCount = 7;
       ColWidth[0] = 0.12;
       ColWidth[1] = 0.04;
       ColWidth[2] = 0.04;
-      ColWidth[3] = 0.10;
-      totalWidth = 0.30;
+      ColWidth[3] = 0.015;
+      ColWidth[4] = 0.015;
+      ColWidth[5] = 0.015;
+      ColWidth[6] = 0.015;
+      totalWidth = 0.28;
     }
-    MultiboardSetTitleText(Multiboard, "英雄榜 难度：" + udg_DiffStr[udg_CurrDiff]);
+    MultiboardSetTitleText(Multiboard, "英雄榜 " + udg_DiffStr[udg_CurrDiff]);
     MultiboardSetRowCount(Multiboard, PlayerCount + rowCountAddtion);
     MultiboardSetItemsStyle(Multiboard, true, false);
     MultiboardSetColumnCount(Multiboard, ColCount);
@@ -148,17 +161,23 @@ library SystemMultiboard requires TimerUtils, GlobalVar, optional PlatformHelper
     TimerStart(CreateTimer(), 120.0, true, function CalcEnemyCount);
     // 显示敌人总数
     MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
-    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.10);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 0], 0.05);
     MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 0], "敌人数量：");
     MultiboardItem[(row * ColCount) + 1] = MultiboardGetItem(Multiboard, row, 1);
     MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 1], 0.04);
     MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 1], "0");
     MultiboardItem[(row * ColCount) + 2] = MultiboardGetItem(Multiboard, row, 2);
-    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 2], 0.10);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 2], 0.05);
     MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 2], "超过失败：");
     MultiboardItem[(row * ColCount) + 3] = MultiboardGetItem(Multiboard, row, 3);
     MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 3], 0.04);
     MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 3], I2S(udg_MaxEnemyCount));
+    MultiboardItem[(row * ColCount) + 4] = MultiboardGetItem(Multiboard, row, 4);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 4], 0.05);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 4], "游戏时间：");
+    MultiboardItem[(row * ColCount) + 5] = MultiboardGetItem(Multiboard, row, 5);
+    MultiboardSetItemWidth(MultiboardItem[(row * ColCount) + 5], 0.05);
+    MultiboardSetItemValue(MultiboardItem[(row * ColCount) + 5], I2S(udg_Time/60) + ":" + I2S(ModuloInteger(udg_Time, 60)));
     row = row + 1;
     // 设置表底格栅
     MultiboardItem[(row * ColCount) + 0] = MultiboardGetItem(Multiboard, row, 0);
@@ -194,10 +213,13 @@ library SystemMultiboard requires TimerUtils, GlobalVar, optional PlatformHelper
     HeaderTitle[0] = "|cffffcc00玩家|r";
     HeaderTitle[1] = "|cffffcc00杀敌|r";
     HeaderTitle[2] = "|cffffcc00工分|r";
-    HeaderTitle[3] = "|cffffcc00单位升级|r";
-    HeaderTitle[4] = "|cffffcc00积分|r";
-    HeaderTitle[5] = "|cffffcc00本局积分|r";
-    HeaderTitle[6] = "|cffffcc00称号|r";
+    HeaderTitle[3] = "|cffffcc00攻|r";
+    HeaderTitle[4] = "|cffffcc00防|r";
+    HeaderTitle[5] = "|cffffcc00速|r";
+    HeaderTitle[6] = "|cffffcc00血|r";
+    HeaderTitle[7] = "|cffffcc00积分|r";
+    HeaderTitle[8] = "|cffffcc00本局积分|r";
+    HeaderTitle[9] = "|cffffcc00称号|r";
   }
 
   function onInit() {

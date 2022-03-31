@@ -8,17 +8,17 @@ endglobals
 //! runtextmacro BonusMod_BeginBonuses()
 //                                    |     NAME     |ABILITY|PREFIX|RAWCODE|RAWCODE| HERO  
 //                                    |              | COUNT |      |  BEGIN|    END| ONLY
-//! runtextmacro BonusMod_DeclareBonus("ARMOR",        "15",  "ZxD",     "A",    "O", "false")
-//! runtextmacro BonusMod_DeclareBonus("DAMAGE",       "15",  "ZxZ",     "A",    "O", "false")
-//! runtextmacro BonusMod_DeclareBonus("LIFE_REGEN",   "10",  "ZxR",     "0",    "9", "false")
-//! runtextmacro BonusMod_DeclareBonus("STRENGTH",     "10",  "ZxQ",     "0",    "9", "true")
-//! runtextmacro BonusMod_DeclareBonus("AGILITY",      "10",  "ZxW",     "0",    "9", "true")
-//! runtextmacro BonusMod_DeclareBonus("INTELLIGENCE", "10",  "ZxE",     "0",    "9", "true")
+//! runtextmacro BonusMod_DeclareBonus("ARMOR",        "18",  "ZxD",     "a",    "0", "false")
+//! runtextmacro BonusMod_DeclareBonus("DAMAGE",       "18",  "ZxZ",     "a",    "0", "false")
+//! runtextmacro BonusMod_DeclareBonus("LIFE_REGEN",   "15",  "ZxR",     "a",    "0", "false")
+//! runtextmacro BonusMod_DeclareBonus("STRENGTH",     "10",  "ZxQ",     "a",    "0", "true")
+//! runtextmacro BonusMod_DeclareBonus("AGILITY",      "10",  "ZxW",     "a",    "0", "true")
+//! runtextmacro BonusMod_DeclareBonus("INTELLIGENCE", "10",  "ZxE",     "a",    "0", "true")
 
 //                                           |     NAME          |ABILITY|PREFIX|RAWCODE|RAWCODE| HERO   
 //                                           |                   | COUNT |      |  BEGIN|    END| ONLY
-//! runtextmacro BonusMod_DeclarePercentBonus("ATTACK_SPEED",       "10", "ZxT",     "0",    "9", "false")
-//! runtextmacro BonusMod_DeclarePercentBonus("MANA_REGEN_PERCENT", "10", "ZxY",     "0",    "9", "false")
+//! runtextmacro BonusMod_DeclarePercentBonus("ATTACK_SPEED",       "10", "ZxT",     "a",    "0", "false")
+//! runtextmacro BonusMod_DeclarePercentBonus("MANA_REGEN_PERCENT", "10", "ZxY",     "a",    "0", "false")
 
 //! runtextmacro BonusMod_EndBonuses()
 
