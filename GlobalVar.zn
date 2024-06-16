@@ -131,6 +131,22 @@ library GlobalVar {
       if (tmp != null && tmp != "") {
         ITEM_LUMBER_AMOUNT = S2I(tmp);
       }
+      tmp = YDWERPGGetMapConfig("GAP_PER_LEVEL");
+      if (tmp != null && tmp != "") {
+        GAP_PER_LEVEL = S2I(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("UNIT_UPGRADE_BASE");
+      if (tmp != null && tmp != "") {
+        UNIT_UPGRADE_BASE = S2R(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("UNIT_UPGRADE_RATIO");
+      if (tmp != null && tmp != "") {
+        UNIT_UPGRADE_RATIO = S2R(tmp);
+      }
+      tmp = YDWERPGGetMapConfig("UNIT_UPGRADE_POWER");
+      if (tmp != null && tmp != "") {
+        UNIT_UPGRADE_POWER = S2R(tmp);
+      }
     }
   }
 
